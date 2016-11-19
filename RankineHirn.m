@@ -51,7 +51,7 @@ e(1) = h(1) - h0 - t0*(s(1) - s0);
 p(2) = p(3)/kpdgen;
 h(2) = v_LH2O * (p(2) - p(1))*1E2 / eta_iP + h(1); % *e2 pour obtenir kJ/kg (si e5 on obtient des joules..)
 %muT2 = (XSteam('my_pT',p(1),t(1)) + XSteam('my_pT',p(2),t(1))) / 2 %muT première approximation
-muT2 = 0.09;
+muT2 = 0.0905;
 cp2  = (XSteam('Cp_pT',p(2),t(1)) + XSteam('CpL_p',p(1))) / 2; %Output 
 t(2) =  t(1) + (v_LH2O*1e2 - muT2)*(p(2) - p(1))/ (cp2);
 % Should add iterations to refine point 2
