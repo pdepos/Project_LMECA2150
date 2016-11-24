@@ -81,22 +81,22 @@ function [ FHNoRH ] =  FeedHeatersNoRH(t3,p3,fh)
 %   - Number of Feedheaters
 %   =======================================================================
 
-%   Note pour moi-même: Premièrve version pour un nombre de FH bas, en ne considérant pas de
-%   bache. Si FH > 4 alors on peut placer une bache, probablement entre le
-%   3eme et 4eme FH.
-
-n = 8 + 3 * fh;
+alpha = 8;                 %Number of fixes points of the schematic
+beta  = 3;                 %Number of points per state: eg: beta = 3 means 4.1 6.1 7.1 or 4.2 6.2 7.2 
+                           %It's in case we need to add one to take
+                           %something more into account. eg before and
+                           %after expansion valves... 
+n = alpha + beta * fh;
 state = State_creation(n); %Creation of the structure
 
 base = RankineHirn(t3,p3);
 state{5} = base{1};
-%state{2} = base{2}; %ATTENTION cet etat n'est pas bon
 state{3} = base{3};
 state{4} = base{4};
 
 % Les Points 4i
 for i = 1:fh
-    ind = 8 + 3*(i-1) + 1;
+    ind = alpha + beta*(i-1) + 1;
     state{ind}.h = state{4}.h + (state{3}.h - state{4}.h)*i / (fh + 1);
     state{ind}.s = state{3}.s + (state{4}.s - state{3}.s)*(fh + 1 - i) / (fh + 1);
     state{ind}.t = XSteam('T_hs',state{ind}.h,state{ind}.s);
@@ -109,29 +109,40 @@ for i = 1:fh
     end
 end
 
-% Point 1, entry FWPump
+% Point 1 entry FWPump
 state{1}.t = XSteam('Tsat_p',state{n-2}.p) - 5;  %FWPump entry temp is sat temp of last bleed - 5°C.
 state{1}.p = XSteam('psat_T',state{1}.t) + 10;   %FWPump entry pressure above saturation pressure.
 state{1}.h = XSteam('h_pT',state{1}.p,state{1}.t);
 state{1}.s = XSteam('s_pT',state{1}.p,state{1}.t);
 state{1}.e = Exergy(state{1}.h,state{1}.s);
 
-% Point 2, exit FWPump
+% Point 2 exit FWPump
 eta_FWP  = 0.85; % Efficiency feedwater pump
 kpdgen  = 0.90; % Pressure drop coefficient at steam generator. Determined via numerical examples in book
 p2 = state{3}.p/kpdgen;
 state{2} = pump(state{1},p2,eta_FWP);
 
-
-position_before_bache = 1;
-index_before_bache = 8 + 1;
-while state{index_before_bache}.p < 2
-    position_before_bache_new = position_before_bache + 1;
-    position_before_bache = position_before_bache_new;
-    index_before_bache_new = 8 + 3*(position_before_bache - 1) + 1;
-    index_before_bache = index_before_bache_new;
+% Point 6.0 and finding the bache if the number of bleeds is higher than 4
+if fh > 4
+    position_bache = 0;                              %References the roman number of the schematic
+    index_bleed_bache = alpha + 1;                   %Index of the bleed entering the bache at higher pressure
+    while state{index_bleed_bache}.p < 4.7
+        position_bache = position_bache + 1;
+        index_bleed_bache = index_bleed_bache + beta;
+    end
+    index_exit_bache = alpha + beta*position_bache;  %References the exit of the bache
+    state{index_exit_bache}.p = 4.6;                 %Pressure inside the bache
+    state{index_exit_bache}.t = XSteam('Tsat_p',state{index_exit_bache}.p);
+    state{index_exit_bache}.h = XSteam('hL_p',state{index_exit_bache}.p);
+    state{index_exit_bache}.s = XSteam('sL_p',state{index_exit_bache}.p);
+    state{index_exit_bache}.x = 0;
+    state{index_exit_bache}.e = Exergy(state{index_exit_bache}.h,state{index_exit_bache}.s);
+    
+    % Pressure point 6.0
+    state{6}.p = state{index_exit_bache}.p;
+else 
+    state{6}.p = state{1}.p;
 end
-position_bache = position_before_bache + 1
 
 
 % Point 6.0 

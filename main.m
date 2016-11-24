@@ -6,7 +6,7 @@
 
 Tmax = 540; % Max Steam Temperature
 Pmax = 40;  % Max Steam Pressure
-FH   = 5;   % Number of FeedHeaters 
+FH   = 6;   % Number of FeedHeaters 
 RH   = 'off';   % Reheating on or off (2)
 
 SimpleRankine   = RankineHirnOLD(540,40);
