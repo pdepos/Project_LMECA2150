@@ -13,6 +13,6 @@ function State = State_creation(n)
 State = cell(n,1);
 
 for i = 1:n
-    State{i} = struct('T',0,'p',0,'h',0,'s',0,'x',NaN,'e',0);
+    State{i} = struct('t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
 end
 end

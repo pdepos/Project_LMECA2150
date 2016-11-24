@@ -1,9 +1,8 @@
-function [ Output ] = RankineHirn( p3, t3 )
+function [ Output ] = RankineHirnOLD( t3, p3 )
 %Rankine-Hirn: Simple Rankine-Hirn cycle.
 %   Input Arguments: 
-%   - Pressure at point 3 [bar]
 %   - Temperature at point 3 [°C]
-%   - Desired power output [MW]
+%   - Pressure at point 3 [bar]
 %   =======================================================================
 t4 = 32;
 t1 = t4;
