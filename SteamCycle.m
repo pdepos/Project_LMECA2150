@@ -145,8 +145,7 @@ else
 end
 
 eta_CP = 0.85;
-state{6}.t = XSteam('Tsat_p',state{6}.p);
-state{6}.h =
+state{6} = pump(state{5},state{6}.p,eta_CP);
 
 
 % Conversion de Structure vers matrice pour l'affichage
