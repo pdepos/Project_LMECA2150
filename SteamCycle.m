@@ -144,18 +144,9 @@ else
     state{6}.p = state{1}.p;
 end
 
-
-% Point 6.0 
-% Note pour Rapport: On fixe la pression à mi-chemin entre la pression de
-% sortie des deux feedheaters qui entourent la bache. Dans notre cycle on a
-% toujours une bache pour avoir de la vapeur de qualité. Elle se trouve 
-% parfois en première position lorsque le nombre de soutirages est petit.
-
-%state{6}.p = (state{8 + 3*(position_bache - 1) + 1}.p + state{8 + 3*(position_before_bache - 1) + 1}.p)/2;
-
-
-
-
+eta_CP = 0.85;
+state{6}.t = XSteam('Tsat_p',state{6}.p);
+state{6}.h =
 
 
 % Conversion de Structure vers matrice pour l'affichage
@@ -176,6 +167,13 @@ function ex = Exergy (h,s)
 end
 
 function muT = muT(t)
+% Function to extrapolate the value of muT of water at different temperatures
+% using values of the LMECA1855 exercice book at 30 bar. Pressure has not a
+% big effect on muT
+% Input Variables:
+%   - Temperature of the water. Max temp = 230 °C
+% =========================================================================
+   
     T   = [0.02 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 180 190 200 210 220 230];
     MuT = [0.10140 0.09720 0.09385 0.09101 0.08847 0.08614 0.08392 0.08175 ...
            0.07960 0.07743 0.07520 0.07288 0.07044 0.06784 0.06504 0.06300 ...
@@ -189,21 +187,36 @@ muT = (MuT(ind) - MuT(ind-1)) * (t - T(ind-1)) / 10 + MuT(ind-1);
 end
 
 function Output = pump(state,p,eta)
-    v_LH2O   = 0.001005; %[m³/kg] volume massique de l'eau
-    state_out = State_creation(1);
+% Function calculating the output state of a pump.
+% Input Variables:
+%   - State at entrance of the pump
+%   - Desired exit pressure
+%   - Efficiency of the pump
+% =========================================================================
     
-    state_out{1}.p = p;
-    state_out{1}.h = v_LH2O * (state_out{1}.p - state.p)*100 / eta + state.h; % *e2 pour obtenir kJ/kg (si e5 on obtient des joules..)
-    muT            = muT(state.t);                                           % muT approx with temp before pump
-    cp2            = (XSteam('Cp_pT',state_out{1}.p,state.t) + XSteam('CpL_p',state.p)) / 2; 
-    state_out{1}.t = state.t + (v_LH2O*100 - muT)*(state_out{1}.p - state.p)/ (cp2);
-    state_out{1}.s = XSteam ('s_pT',state_out{1}.p,state_out{1}.t);
-    state_out{1}.e = Exergy(state_out{1}.h,state_out{1}.s);
-    
-    Output = state_out{1};
+v_LH2O   = 0.001005; %[m³/kg] volume massique de l'eau
+state_out = State_creation(1);
+
+state_out{1}.p = p;
+state_out{1}.h = v_LH2O * (state_out{1}.p - state.p)*100 / eta + state.h; % *e2 pour obtenir kJ/kg (si e5 on obtient des joules..)
+muT            = muT(state.t);                                           % muT approx with temp before pump
+cp2            = (XSteam('Cp_pT',state_out{1}.p,state.t) + XSteam('CpL_p',state.p)) / 2; 
+state_out{1}.t = state.t + (v_LH2O*100 - muT)*(state_out{1}.p - state.p)/ (cp2);
+state_out{1}.s = XSteam ('s_pT',state_out{1}.p,state_out{1}.t);
+state_out{1}.e = Exergy(state_out{1}.h,state_out{1}.s);
+
+Output = state_out{1};
 end
 
 function Output = turbine (state,t_low,p_low,eta)
+% Function calculating the output state of a turbine.
+% Input Variables:
+%   - State at entrance of the turbine
+%   - Exit temperature
+%   - Exit pressure
+%   - Isentropic efficiency of the turbine
+% =========================================================================
+   
     state_out = State_creation(1);
     
     state_out{1}.t = t_low;
