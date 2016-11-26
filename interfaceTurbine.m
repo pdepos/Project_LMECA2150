@@ -22,7 +22,7 @@ function varargout = interfaceTurbine(varargin)
 
 % Edit the above text to modify the response to help interfaceTurbine
 
-% Last Modified by GUIDE v2.5 20-Nov-2016 15:13:30
+% Last Modified by GUIDE v2.5 26-Nov-2016 14:08:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -83,13 +83,7 @@ function recuperator_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of recuperator
 if get(hObject,'Value')==1
-    % change cycle figure
-    axes(handles.cycle);
-    img = imread('TurbineGasRecup.PNG');
-    image(img);
-    set(gca,'Visible','off');
-    
-    
+    initialize_Recup(hObject, handles);
 else
     initialize_gui(hObject, handles);
 end
@@ -293,6 +287,29 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+function NTUv_Callback(hObject, eventdata, handles)
+% hObject    handle to NTUv (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of NTUv as text
+%        str2double(get(hObject,'String')) returns contents of NTUv as a double
+NTU = str2double(get(hObject, 'String'));
+handles.metricdata.NTU = NTU;
+guidata(hObject,handles)
+
+% --- Executes during object creation, after setting all properties.
+function NTUv_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to NTUv (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
 
 % --- Executes on button press in simulate.
 function simulate_Callback(hObject, eventdata, handles)
@@ -318,10 +335,193 @@ if get(handles.recuperator,'Value')==0
     etaPiT = 0.9;
     
     %%%% Simulation %%%%
-    [state,Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten,Exergy_losses,labels_Ex,etaRotex,etaCyclex,etaCombex,etaTotex] = mainTurbineGaz(T1,r,etaPiC,kcc,T3,etaPiT,Pe,x,y,z);
+    [state,Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten,Exergy_losses,labels_Ex,etaRotex,etaCyclex,etaCombex,etaTotex,ma,mc,mg,lambda] = mainTurbineGaz(T1,r,etaPiC,kcc,T3,etaPiT,Pe,x,y,z);
+ 
+    %%%% plot Results %%%%
     
-else
+    % mass flow
+    set(handles.mav,'String',ma);
+    set(handles.mgv,'String',mg);
+    set(handles.mcv,'String',mc);
     
+    % efficiencies
+    set(handles.mecenv,'String',etaMec);
+    set(handles.cyclenv,'String',etaCyclen);
+    set(handles.totenv,'String',etaToten);
+    
+    set(handles.mecexv,'String',etaMec);
+    set(handles.rotexv,'String',etaRotex);
+    set(handles.cyclexv,'String',etaCyclex);
+    set(handles.combexv,'String',etaCombex);
+    set(handles.totexv,'String',etaTotex);
+    
+    % states
+    stateMat = [state{1}.T-273.15 state{1}.p state{1}.h state{1}.s state{1}.e;...
+        state{2}.T-273.15 state{2}.p state{2}.h state{2}.s state{2}.e;...
+        state{3}.T-273.15 state{3}.p state{3}.h state{3}.s state{3}.e;...
+        state{4}.T-273.15 state{4}.p state{4}.h state{4}.s state{4}.e];
+    set(handles.states,'Data',stateMat);
+    
+    % Diagrams
+    graph1 = get(handles.choix1,'SelectedObject');
+    if graph1 == handles.Benergy1
+        axes(handles.graph1);
+        En = pie(Energy_losses);
+        hText = findobj(En,'Type','text');
+        oldExtents_cell = get(hText,'Extent'); % cell array
+        oldExtents = cell2mat(oldExtents_cell); % numeric array
+        
+        set(hText,{'String'},labels_Energy');
+        
+        newExtents_cell = get(hText,'Extent'); % cell array
+        newExtents = cell2mat(newExtents_cell); % numeric array
+        width_change = newExtents(:,3)-oldExtents(:,3);
+        signValues = sign(oldExtents(:,1));
+        offset = signValues.*(width_change/2);
+        textPositions_cell = get(hText,{'Position'}); % cell array
+        textPositions = cell2mat(textPositions_cell); % numeric array
+        textPositions(:,1) = textPositions(:,1) + offset; % add offset
+        set(hText,{'Position'},num2cell(textPositions,[3,2])); % set new position
+        
+        titre = strcat({'Primary flux'},{' '},{num2str(0.1*round(10*sum(Energy_losses)))},...
+            {' '},{'MW'});
+        t = title(titre,'FontSize',12,'FontWeight','bold');
+        pos = get(t,'position');
+        set(t, 'position', pos+[0 0.15 0]);
+        
+    elseif graph1 == handles.Bexergy1
+        axes(handles.graph1);
+        Ex = pie(Exergy_losses);
+        hText = findobj(Ex,'Type','text');
+        oldExtents_cell = get(hText,'Extent'); % cell array
+        oldExtents = cell2mat(oldExtents_cell); % numeric array
+        
+        set(hText,{'String'},labels_Ex');
+        
+        newExtents_cell = get(hText,'Extent'); % cell array
+        newExtents = cell2mat(newExtents_cell); % numeric array
+        width_change = newExtents(:,3)-oldExtents(:,3);
+        signValues = sign(oldExtents(:,1));
+        offset = signValues.*(width_change/2);
+        textPositions_cell = get(hText,{'Position'}); % cell array
+        textPositions = cell2mat(textPositions_cell); % numeric array
+        textPositions(:,1) = textPositions(:,1) + offset; % add offset
+        set(hText,{'Position'},num2cell(textPositions,[3,2])) % set new position
+        
+        titre = strcat({'Primary flux'},{' '},{num2str(0.1*round(10*sum(Exergy_losses)))},...
+            {' '},{'MW'});
+        t = title(titre,'FontSize',12,'FontWeight','bold');
+        pos = get(t,'position');
+        set(t, 'position', pos+[0 0.15 0]);
+    elseif graph1 == handles.BTS1
+        
+    elseif graph1 == handles.BHS1
+        
+    end
+    
+elseif get(handles.recuperator,'Value')==1
+    
+    %%%% Parameters %%%%
+    T1 = handles.metricdata.T1; % [°C]
+    r = handles.metricdata.r;
+    Pe = handles.metricdata.Pe; % [MW]
+    kcc = handles.metricdata.kcc;
+    T3 = handles.metricdata.T3; % [°C]
+    x = handles.metricdata.x;
+    y = handles.metricdata.y;
+    z = handles.metricdata.z;
+    NTU = handles.metricdata.NTU;
+    
+    %%%% Fixed data %%%%
+    etaPiC = 0.9;
+    etaPiT = 0.9;
+    
+    %%%% Simulation %%%%
+    [state,Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten,Exergy_losses,labels_Ex,etaRotex,etaCyclex,etaCombex,etaTotex,ma,mc,mg,lambda] = mainTurbineGazRecup(T1,r,etaPiC,kcc,T3,etaPiT,Pe,x,y,z,NTU);
+ 
+    %%%% plot Results %%%%
+    
+    % mass flow
+    set(handles.mav,'String',ma);
+    set(handles.mgv,'String',mg);
+    set(handles.mcv,'String',mc);
+    
+    % efficiencies
+    set(handles.mecenv,'String',etaMec);
+    set(handles.cyclenv,'String',etaCyclen);
+    set(handles.totenv,'String',etaToten);
+    
+    set(handles.mecexv,'String',etaMec);
+    set(handles.rotexv,'String',etaRotex);
+    set(handles.cyclexv,'String',etaCyclex);
+    set(handles.combexv,'String',etaCombex);
+    set(handles.totexv,'String',etaTotex);
+    
+    % states
+    stateMat = [state{1}.T-273.15 state{1}.p state{1}.h state{1}.s state{1}.e;...
+        state{2}.T-273.15 state{2}.p state{2}.h state{2}.s state{2}.e;...
+        state{3}.T-273.15 state{3}.p state{3}.h state{3}.s state{3}.e;...
+        state{4}.T-273.15 state{4}.p state{4}.h state{4}.s state{4}.e;...
+        state{5}.T-273.15 state{5}.p state{5}.h state{5}.s state{5}.e;...
+        state{6}.T-273.15 state{6}.p state{6}.h state{6}.s state{6}.e];
+    set(handles.states,'Data',stateMat);
+    
+    % Diagrams
+    graph1 = get(handles.choix1,'SelectedObject');
+    if graph1 == handles.Benergy1
+        axes(handles.graph1);
+        En = pie(Energy_losses);
+        hText = findobj(En,'Type','text');
+        oldExtents_cell = get(hText,'Extent'); % cell array
+        oldExtents = cell2mat(oldExtents_cell); % numeric array
+        
+        set(hText,{'String'},labels_Energy');
+        
+        newExtents_cell = get(hText,'Extent'); % cell array
+        newExtents = cell2mat(newExtents_cell); % numeric array
+        width_change = newExtents(:,3)-oldExtents(:,3);
+        signValues = sign(oldExtents(:,1));
+        offset = signValues.*(width_change/2);
+        textPositions_cell = get(hText,{'Position'}); % cell array
+        textPositions = cell2mat(textPositions_cell); % numeric array
+        textPositions(:,1) = textPositions(:,1) + offset; % add offset
+        set(hText,{'Position'},num2cell(textPositions,[3,2])); % set new position
+        
+        titre = strcat({'Primary flux'},{' '},{num2str(0.1*round(10*sum(Energy_losses)))},...
+            {' '},{'MW'});
+        t = title(titre,'FontSize',12,'FontWeight','bold');
+        pos = get(t,'position');
+        set(t, 'position', pos+[0 0.15 0]);
+        
+    elseif graph1 == handles.Bexergy1
+        axes(handles.graph1);
+        Ex = pie(Exergy_losses);
+        hText = findobj(Ex,'Type','text');
+        oldExtents_cell = get(hText,'Extent'); % cell array
+        oldExtents = cell2mat(oldExtents_cell); % numeric array
+        
+        set(hText,{'String'},labels_Ex');
+        
+        newExtents_cell = get(hText,'Extent'); % cell array
+        newExtents = cell2mat(newExtents_cell); % numeric array
+        width_change = newExtents(:,3)-oldExtents(:,3);
+        signValues = sign(oldExtents(:,1));
+        offset = signValues.*(width_change/2);
+        textPositions_cell = get(hText,{'Position'}); % cell array
+        textPositions = cell2mat(textPositions_cell); % numeric array
+        textPositions(:,1) = textPositions(:,1) + offset; % add offset
+        set(hText,{'Position'},num2cell(textPositions,[3,2])) % set new position
+        
+        titre = strcat({'Primary flux'},{' '},{num2str(0.1*round(10*sum(Exergy_losses)))},...
+            {' '},{'MW'});
+        t = title(titre,'FontSize',12,'FontWeight','bold');
+        pos = get(t,'position');
+        set(t, 'position', pos+[0 0.15 0]);
+    elseif graph1 == handles.BTS1
+        
+    elseif graph1 == handles.BHS1
+        
+    end
 end
 
 function initialize_gui(fig_handle, handles)
@@ -350,4 +550,85 @@ set(handles.T3v,'String',1400);
 set(handles.xv,'String',1);
 set(handles.yv,'String',4);
 set(handles.zv,'String',0);
+
+% NTU
+set(handles.NTU,'String',' ');
+set(handles.NTUv,'Visible','off');
+
+% mass flow
+set(handles.mav,'String',0);
+set(handles.mgv,'String',0);
+set(handles.mcv,'String',0);
+    
+% efficiencies
+set(handles.mecenv,'String',0);
+set(handles.cyclenv,'String',0);
+set(handles.totenv,'String',0);
+    
+set(handles.mecexv,'String',0);
+set(handles.rotexv,'String',0);
+set(handles.cyclexv,'String',0);
+set(handles.combexv,'String',0);
+set(handles.totexv,'String',0);
+
+% state table
+set(handles.states,'Data',zeros(4,5));
+set(gca,'Visible','off');
+
+cla(handles.graph1);
 guidata(handles.figure1, handles);
+
+function initialize_Recup(fig_handle, handles)
+
+% Cycle figure
+axes(handles.cycle);
+img = imread('TurbineGasRecup.PNG');
+image(img);
+set(gca,'Visible','off');
+
+% default parameters
+handles.metricdata.T1 = 15;
+handles.metricdata.r = 18;
+handles.metricdata.Pe = 230;
+handles.metricdata.kcc = 0.95;
+handles.metricdata.T3 = 1400;
+handles.metricdata.x = 1;
+handles.metricdata.y = 4;
+handles.metricdata.z = 0;
+
+set(handles.T1v,'String',15);
+set(handles.rv,'String',18);
+set(handles.Pev,'String',230);
+set(handles.kccv,'String',0.95);
+set(handles.T3v,'String',1400);
+set(handles.xv,'String',1);
+set(handles.yv,'String',4);
+set(handles.zv,'String',0);
+
+% NTU
+set(handles.NTU,'String','Number of transfer units (NTU)');
+set(handles.NTUv,'Visible','on');
+
+handles.metricdata.NTU = 2.5;
+set(handles.NTUv,'String',2.5);
+% mass flow
+set(handles.mav,'String',0);
+set(handles.mgv,'String',0);
+set(handles.mcv,'String',0);
+    
+% efficiencies
+set(handles.mecenv,'String',0);
+set(handles.cyclenv,'String',0);
+set(handles.totenv,'String',0);
+    
+set(handles.mecexv,'String',0);
+set(handles.rotexv,'String',0);
+set(handles.cyclexv,'String',0);
+set(handles.combexv,'String',0);
+set(handles.totexv,'String',0);
+
+% state table
+set(handles.states,'Data',zeros(6,5));
+cla(handles.graph1);
+guidata(handles.figure1, handles);
+

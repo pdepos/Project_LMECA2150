@@ -43,12 +43,12 @@ DrH = 282.4*((2*z+y*x-y)/(2+y)) + ((2*x-2*z+y)/(2+y))*((1-y/4)*393.4 + (y/4)*802
 LHV = (DrH/Mfuel)*10^3; %[kJ/kg] --> lower heating value
 
 Hv_H2O = 2511; % heat of vaporization [kJ/kg]
-HHV = LHV + Hv_H2O*(((y/2)/(18*10^(-3)))/(1/(Mfuel*10^(-3)))); % higher heating value in [kJ/kg]
+HHV = LHV + Hv_H2O*(y/2)*(18/Mfuel); % higher heating value in [kJ/kg]
 
-Cp_fuel = ((2*z+y*(x-1))/(2+y))*Cp_CO + ((y*(1+z-x))/(2+y))*Cp_H2O_liq + ...
-    ((2*x-2*z+y)/(2+y))*((1-y/4)*Cp_C + y/4*Cp_CH4); % [kJ/(kg*K)]
-S_fuel = ((2*z+y*(x-1))/(2+y))*S_CO + ((y*(1+z-x))/(2+y))*S_H2O_liq + ...
-    ((2*x-2*z+y)/(2+y))*((1-y/4)*S_C + y/4*S_CH4); % [kJ/(kg*K)]
+Cp_fuel = ((2*z+y*(x-1))/(2+y))*Cp_CO*(M_CO/Mfuel) + ((y*(1+z-x))/(2+y))*Cp_H2O_liq*(M_H2O/Mfuel) + ...
+    ((2*x-2*z+y)/(2+y))*((1-y/4)*Cp_C*(M_C/Mfuel) + y/4*Cp_CH4*(M_CH4/Mfuel)); % [kJ/(kg*K)]
+S_fuel = ((2*z+y*(x-1))/(2+y))*S_CO*(M_CO/Mfuel) + ((y*(1+z-x))/(2+y))*S_H2O_liq*(M_H2O/Mfuel) + ...
+    ((2*x-2*z+y)/(2+y))*((1-y/4)*S_C*(M_C/Mfuel) + y/4*S_CH4*(M_CH4/Mfuel));% [kJ/(kg*K)]
 
 %%%% calculation of mass fractions %%%%
 m_O2 = (x+(y-2*z)/4)*(1/Mfuel)*M_O2;

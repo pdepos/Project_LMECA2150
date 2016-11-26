@@ -1,4 +1,4 @@
-function [Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten] = energyAnalysis4(state,ma,mc,mg,Pe,x,y,z)
+function [Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten] = energyAnalysis6(state,ma,mc,mg,Pe,x,y,z)
 % INPUTS :
 %   - state : cell array containing all the state characteristics with T in
 %             [K], p in [bar], h in [kJ/kg], s in [kJ/(Kg*K)] and e in [kJ/kg]
@@ -13,8 +13,7 @@ DrH = 282.4*((2*z+y*x-y)/(2+y)) + ((2*x-2*z+y)/(2+y))*((1-y/4)*393.4 + (y/4)*802
 LHV = (DrH/Mfuel)*10^3; %[kJ/kg] --> lower heating value
 
 %%%% Energy analysis %%%%
-
-WmT = state{3}.h - state{4}.h; % turbine work [kJ/kg]
+WmT = state{4}.h - state{5}.h; % turbine work [kJ/kg]
 WmC = state{2}.h - state{1}.h; % compressor work [kJ/kg]
 
 PmT = mg*WmT; % turbine power [kW]
@@ -42,5 +41,7 @@ lab_EP = vertcat({'Effective power'},strcat({num2str(0.1*round(10*Pe/10^3))},{' 
 lab_ExL = vertcat({'Exhaust losses'},strcat({num2str(0.1*round(10*Pech/10^3))},{' '},{'MW'}));
 lab_Mec = vertcat({'Mechanical losses'},strcat({num2str(0.1*round(10*Pfmec/10^3))},{' '},{'MW'}));
 labels_Energy = {lab_EP,lab_ExL,lab_Mec};
+
+
 
 end

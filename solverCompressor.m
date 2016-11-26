@@ -1,5 +1,6 @@
 function [T2,na] = solverCompressor(T2_0,etaPiC,Ra,T1,r,mO2_a,mN2_a)
 
+
 % step 1
 
 if T1 < 300
@@ -18,7 +19,7 @@ end
 T2_prev = T2_0;
 ma_prev = 5;
 
-while (abs(T2-T2_prev) > 0.0001) || (abs(na-ma_prev) > 0.0001)
+while (abs(T2-T2_prev) > 0.001) || (abs(na-ma_prev) > 0.001)
     T2_prev = T2;
     ma_prev = na;
     if T1 < 300
