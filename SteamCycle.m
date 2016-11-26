@@ -40,7 +40,7 @@ function [ Rankine ] = RankineHirn( t3, p3 )
 %   =======================================================================
 
 n = 4;                     % number of states
-state = State_creation(n); %Creation of the structure
+state = State_creation(n,4,0); %Creation of the structure
 
 % Point 3
 state{3}.t = t3;
@@ -81,13 +81,13 @@ function [ FHNoRH ] =  FeedHeatersNoRH(t3,p3,fh)
 %   - Number of Feedheaters
 %   =======================================================================
 
-alpha = 8;                 %Number of fixes points of the schematic
+alpha = 8;                 %Number of fixed points of the schematic
 beta  = 3;                 %Number of points per state: eg: beta = 3 means 4.1 6.1 7.1 or 4.2 6.2 7.2 
                            %It's in case we need to add one to take
                            %something more into account. eg before and
-                           %after expansion valves... 
+gamma = 4;                 %Param for bache calculation
 n = alpha + beta * fh;
-state = State_creation(n); %Creation of the structure
+state = State_creation(n,alpha,beta); %Creation of the structure
 
 base = RankineHirn(t3,p3);
 state{5} = base{1};
@@ -104,8 +104,6 @@ for i = 1:fh
     state{ind}.e = Exergy(state{ind}.h,state{ind}.s);
     if state{ind}.h < XSteam('hV_T',state{ind}.t)
         state{ind}.x = XSteam('x_ph',state{ind}.p,state{ind}.h);
-                   % (state{ind}.h - XSteam('hL_T',state{ind}.t)) / ...
-                   % (XSteam('hV_T',state{ind}.t) - XSteam('hL_T',state{ind}.t));
     end
 end
 
@@ -122,38 +120,81 @@ kpdgen  = 0.90; % Pressure drop coefficient at steam generator. Determined via n
 p2 = state{3}.p/kpdgen;
 state{2} = pump(state{1},p2,eta_FWP);
 
-% Point 6.0 and finding the bache if the number of bleeds is higher than 4
-if fh > 4
-    position_bache = 0;                              %References the roman number of the schematic
-    index_bleed_bache = alpha + 1;                   %Index of the bleed entering the bache at higher pressure
-    while state{index_bleed_bache}.p < 4.7
+% Finding the bache if the number of bleeds is higher than gamma
+position_bache = 0;                              %References the roman number of the schematic
+index_bleed_bache = alpha + 1;                   %Index of the bleed entering the bache at higher pressure
+if fh > gamma
+    while state{index_bleed_bache}.p < 4.6
         position_bache = position_bache + 1;
         index_bleed_bache = index_bleed_bache + beta;
     end
     index_exit_bache = alpha + beta*position_bache;  %References the exit of the bache
-    state{index_exit_bache}.p = 4.6;                 %Pressure inside the bache
-    state{index_exit_bache}.t = XSteam('Tsat_p',state{index_exit_bache}.p);
-    state{index_exit_bache}.h = XSteam('hL_p',state{index_exit_bache}.p);
-    state{index_exit_bache}.s = XSteam('sL_p',state{index_exit_bache}.p);
-    state{index_exit_bache}.x = 0;
-    state{index_exit_bache}.e = Exergy(state{index_exit_bache}.h,state{index_exit_bache}.s);
     
-    % Pressure point 6.0
+    % Points 7.i exit of the bleed condesors
+    for i = 1:fh
+        ind = alpha + beta*i;
+        ind_bleed = alpha + beta*(i-1) + 1;
+    
+        if i == position_bache
+            % Bache exit conditions 
+            state{index_exit_bache}.p = 4.6;          % Fixed pressure inside the bache
+            state{index_exit_bache}.t = XSteam('Tsat_p',state{index_exit_bache}.p);
+            state{index_exit_bache}.h = XSteam('hL_p',state{index_exit_bache}.p);
+            state{index_exit_bache}.s = XSteam('sL_p',state{index_exit_bache}.p);
+            state{index_exit_bache}.x = 0;
+            state{index_exit_bache}.e = Exergy(state{index_exit_bache}.h,state{index_exit_bache}.s);
+        else
+            state{ind}.p = state{ind_bleed}.p;
+            state{ind}.t = XSteam('Tsat_p',state{ind}.p);
+            state{ind}.x = 0;
+            state{ind}.h = XSteam('hL_p',state{ind}.p);
+            state{ind}.s = XSteam('sL_p',state{ind}.p);
+            state{ind}.e = Exergy(state{ind}.h,state{ind}.s);
+        end
+    end
+    
+%     % Points 7.i exit of the bleed condesors before bache
+%     for i = 1:(position_bache - 1)
+%     ind = alpha + beta*i;
+%     ind_bleed = alpha + beta*(i-1) + 1;
+%     
+%     state{ind}.p = state{ind_bleed}.p;
+%     state{ind}.t = XSteam('Tsat_p',state{ind}.p);
+%     state{ind}.x = 0;
+%     state{ind}.h = XSteam('hL_p',state{ind}.p);
+%     state{ind}.s = XSteam('sL_p',state{ind}.p);
+%     state{ind}.e = Exergy(state{ind}.h,state{ind}.s);
+%     end
+    
+    % Pressure point 6.0 (exit Condensor Pump)
     state{6}.p = state{index_exit_bache}.p;
 else 
     state{6}.p = state{1}.p;
+    
+    % Points 7.i exit of the bleed condensers
+    for i = 1:fh
+        ind = alpha + beta*i;
+        ind_bleed = alpha + beta*(i-1) + 1;
+
+        state{ind}.p = state{ind_bleed}.p;
+        state{ind}.t = XSteam('Tsat_p',state{ind}.p);
+        state{ind}.x = 0;
+        state{ind}.h = XSteam('hL_p',state{ind}.p);
+        state{ind}.s = XSteam('sL_p',state{ind}.p);
+        state{ind}.e = Exergy(state{ind}.h,state{ind}.s);
+    end
 end
 
 eta_CP = 0.85;
 state{6} = pump(state{5},state{6}.p,eta_CP);
 
-
-% Conversion de Structure vers matrice pour l'affichage
-FHNoRH = ones(n:7);
-for i = 1:n
-        FHNoRH(i,:)    = [i state{i}.t state{i}.p state{i}.x ...
-                              state{i}.h state{i}.s state{i}.e];
-end
+FHNoRH = state;
+%Conversion de Structure vers matrice pour l'affichage
+% FHNoRH = ones(n:7);
+% for i = 1:n
+%         FHNoRH(i,:)    = [state{i}.States state{i}.t state{i}.p state{i}.x ...
+%                               state{i}.h state{i}.s state{i}.e];
+% end
 end
 
 %% 
@@ -194,8 +235,9 @@ function Output = pump(state,p,eta)
 % =========================================================================
     
 v_LH2O   = 0.001005; %[m³/kg] volume massique de l'eau
-state_out = State_creation(1);
+state_out = State_creation(1,1,1);
 
+state_out{1}.States = state.States + 1;
 state_out{1}.p = p;
 state_out{1}.h = v_LH2O * (state_out{1}.p - state.p)*100 / eta + state.h; % *e2 pour obtenir kJ/kg (si e5 on obtient des joules..)
 muT            = muT(state.t);                                           % muT approx with temp before pump
@@ -216,8 +258,9 @@ function Output = turbine (state,t_low,p_low,eta)
 %   - Isentropic efficiency of the turbine
 % =========================================================================
    
-    state_out = State_creation(1);
+    state_out = State_creation(1,1,1);
     
+    state_out{1}.States = state.States + 1;
     state_out{1}.t = t_low;
     state_out{1}.p = p_low;
     s_isos  = state.s;

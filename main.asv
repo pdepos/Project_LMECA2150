@@ -1,0 +1,30 @@
+%% =======================================
+% Project LMECA2150
+%  by Philippe de Posson   5706-10-00
+%     Jeremie Waltzing     xxxx-xx-xx
+%% =======================================
+
+Tmax = 540; % Max Steam Temperature
+Pmax = 40;  % Max Steam Pressure
+FH   = 7;   % Number of FeedHeaters 
+RH   = 'off';   % Reheating on or off (2)
+
+SimpleRankine   = RankineHirnOLD(540,40);
+Steam_Cycle     = SteamCycle (Tmax, Pmax, FH, RH);
+
+%cellData = struct2cell(Steam_Cycle);
+A = size(Steam_Cycle);
+for i=1:A(1)
+    fprintf('%15s %f.2 %f.2 %f.2 %f.2 %f.2 %f.2\n',Steam_Cycle{i}.States,Steam_Cycle{i}.t,Steam_Cycle{i}.p, ...
+        Steam_Cycle{i}.x,Steam_Cycle{i}.h,Steam_Cycle{i}.s,Steam_Cycle{i}.e);
+end
+
+disp('       States        t [°C]      p [bar]        x [-]    h [kJ/kg]   s [kJ/kgK]     e[kJ/kg] ')
+%disp(SimpleRankine)
+disp(Steam_Cycle)
+
+% regions = struct('State',{'New York'; 'Ohio'; 'North Carolina'},...
+%                     'Capital',{'Albany'; 'Columbus'; 'Raleigh'},...
+%                     'Population',{97856; 787033; 403892});  %# Sample structure
+% cellData = struct2cell(regions);         %# A 3-by-3 cell array
+% fprintf('%15s (%s): %d\n',cellData{:}); 
