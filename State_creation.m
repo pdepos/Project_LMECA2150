@@ -12,13 +12,25 @@ function State = State_creation(n,alpha,beta)
 
 State = cell(n,1);
 for i = 1:n
-    if i <= alpha
+    if i <= 2
         formatSpec1 = '%d';
         str1 = sprintf(formatSpec1,i);
         State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
-    else 
+    elseif i == 3
+        formatSpec1 = '%d''';
+        str1 = sprintf(formatSpec1,2);
+        State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+    elseif i == 4
+        formatSpec1 = '%d%s';
+        str1 = sprintf(formatSpec1,2,'"');
+        State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+    elseif (i > 4) && ( i <= alpha)
+        formatSpec1 = '%d';
+        str1 = sprintf(formatSpec1,i-2);
+        State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+    elseif i > alpha
         formatSpec1 = '%d.%d';
-        modulo = mod(i,beta);
+        modulo = mod((i-2),beta);
         if modulo == 1
             a = 4;
         elseif modulo == 2
@@ -28,7 +40,7 @@ for i = 1:n
         elseif modulo == 0
             a = 8;
         end
-        roman_index = floor((i-1)./beta)-1;
+        roman_index = floor((i-3)./beta)-1;
         str1 = sprintf(formatSpec1,a,roman_index);
         State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
     end

@@ -28,4 +28,4 @@ end
 
 %Trying to display the interesting points in a graph. 
 
-%plot(S,T,'o');
+plot(S,T,'o');
