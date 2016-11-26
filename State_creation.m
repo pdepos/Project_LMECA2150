@@ -11,25 +11,26 @@ function State = State_creation(n,alpha,beta)
 % which the default value is NaN
 
 State = cell(n,1);
-
 for i = 1:n
     if i <= alpha
-        formatSpec = '%d';
-        str = sprintf(formatSpec,i);
-        State{i} = struct('States',str,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        formatSpec1 = '%d';
+        str1 = sprintf(formatSpec1,i);
+        State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
     else 
-        formatSpec = '%d.%d';
+        formatSpec1 = '%d.%d';
         modulo = mod(i,beta);
-        if modulo == 0
+        if modulo == 1
             a = 4;
-        elseif modulo == 1
-            a = 6;
         elseif modulo == 2
+            a = 6;
+        elseif modulo == 3
             a = 7;
+        elseif modulo == 0
+            a = 8;
         end
-        b = floor(i./beta) - 2;
-        str = sprintf(formatSpec,a,b);
-        State{i} = struct('States',str,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        roman_index = floor((i-1)./beta)-1;
+        str1 = sprintf(formatSpec1,a,roman_index);
+        State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
     end
 end
 end

@@ -1,4 +1,4 @@
-function State = State_creation(n,fixed,fh)
+function State = State_creation(n,alpha,beta)
 % function creating an cell vecto 'State' of n lignes where n is 
 % the number of cycle's states.
 % Each cell contain a structure with the following fields :
@@ -13,11 +13,29 @@ function State = State_creation(n,fixed,fh)
 State = cell(n,1);
 
 for i = 1:n
-    if i <= fixed
-        State{i} = struct('S't',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+    if i <= alpha
+        formatSpec1 = '%d';
+        str1 = sprintf(formatSpec1,i);
+        titre = 'lala';
+        formatSpec2 = '%s';
+        str2 = sprintf(formatSpec2,'-');
+        State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
     else 
-        State{i} = struct('t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        formatSpec1 = '%d.%d';
+        modulo = mod(i,beta);
+        if modulo == 0
+            a = 4;
+        elseif modulo == 1
+            a = 6;
+        elseif modulo == 2
+            a = 7;
+        end
+        b = floor(i./beta) - 2;
+        str1 = sprintf(formatSpec1,a,b);
+        titre = '-';
+        formatSpec2 = '%s';
+        str2 = sprintf(formatSpec2,titre);
+        State{i} = struct('States',str1,'t',0,'p',0,'x',str2,'h',0,'s',0,'e',0);
     end
-    
 end
 end
