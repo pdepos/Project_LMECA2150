@@ -19,7 +19,7 @@ switch RH
         end
     case 'on'
         if FH == 0
-            Output = 2;
+            Output = ReHeatingNoFH();
         elseif FH > 0
             Output = 3;
         else
@@ -71,7 +71,7 @@ state{1}.e = Exergy(state{1}.h,state{1}.s);
 % Point 2 exit FWPump
 eta_FWP  = 0.85; % Efficiency feedwater pump
 kpdgen  = 0.90; % Pressure drop coefficient at steam generator. Determined via numerical examples in book
-p2 = state{3}.p/kpdgen;
+p2 = state{ind3}.p/kpdgen;
 state{2} = pump(state{1},state{2},p2,eta_FWP);
 
 % Point 2'
@@ -82,19 +82,19 @@ state{ind2i}.h = XSteam('hL_p',state{ind2i}.p);
 state{ind2i}.s = XSteam('sL_p',state{ind2i}.p);
 state{ind2i}.e = Exergy(state{ind2i}.h,state{ind2i}.s);
 
-% Point 2'
+% Point 2''
 state{ind2ii}.p = state{ind3}.p;
-state{ind2ii}.t = XSteam('Tsat_p',state{ind2i}.p);
-state{ind2ii}.x = 0;
-state{ind2ii}.h = XSteam('hL_p',state{ind2ii}.p);
-state{ind2ii}.s = XSteam('sL_p',state{ind2ii}.p);
-state{ind2ii}.e = Exergy(state{ind2i}.h,state{ind2i}.s);
+state{ind2ii}.t = XSteam('Tsat_p',state{ind2ii}.p);
+state{ind2ii}.x = 1;
+state{ind2ii}.h = XSteam('hV_p',state{ind2ii}.p);
+state{ind2ii}.s = XSteam('sV_p',state{ind2ii}.p);
+state{ind2ii}.e = Exergy(state{ind2ii}.h,state{ind2ii}.s);
 
 Rankine = state;
 end
 
 %% 
-function [ FHNoRH ] =  FeedHeatersNoRH(t3,p3,fh)
+function [ FHNoRH ] =  FeedHeatersNoRH( t3, p3, fh )
 % Cycle with feedheaters but no reheating
 %   Input Arguments: 
 %   - Temperature at point 3 [°C]
@@ -114,21 +114,25 @@ eta_BP   = 0.85;           %Efficiency of the Bache Pump
 eta_CP   = 0.85;           %Efficiency Condenser Pump
 kpdgen   = 0.90;           %Pressure drop coefficient at steam generator. 
                            %Determined via numerical examples in book
-ind3 = 5;
-ind4 = 6;
-ind5 = 7;
-ind6 = 8;
-ind7 = 9;
-ind8 = 10;
+ind2i  = 3;
+ind2ii = 4;
+ind3   = 5;
+ind4   = 6;
+ind5   = 7;
+ind6   = 8;
+ind7   = 9;
+ind8   = 10;
 
 n = alpha + beta * fh;
 state = State_creation(n,alpha,beta); %Creation of the structure
 
 base = RankineHirn(t3,p3);
-state{ind5} = base{1};
+state{ind2i}  = base{ind2i};
+state{ind2ii} = base{ind2ii};
+state{ind5}   = base{1};
 state{ind5}.States = '5';
-state{ind3} = base{3};
-state{ind4} = base{4};
+state{ind3}   = base{ind3};
+state{ind4}   = base{ind4};
 
 % Les Points 4i
 for i = 1:fh
@@ -151,7 +155,7 @@ state{1}.s = XSteam('s_pT',state{1}.p,state{1}.t);
 state{1}.e = Exergy(state{1}.h,state{1}.s);
 
 % Point 2 exit FWPump
-p2 = state{ind5}.p/kpdgen;
+p2 = state{ind3}.p/kpdgen;
 state{2} = pump(state{1},state{2},p2,eta_FWP);
 
 
@@ -291,7 +295,11 @@ state{ind8}.e = Exergy(state{ind8}.h,state{ind8}.s);
 FHNoRH = state;
 end
 
-%% 
+%%
+function [ RHNoFH ] = ReHeatingNoFH()
+end
+
+%%
 function ex = Exergy (h,s)
     t0 = 273.15 + 15; %[K]
     p0 = 0.01704;

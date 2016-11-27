@@ -19,7 +19,7 @@ switch RH
         end
     case 'on'
         if FH == 0
-            Output = 2;
+            Output = ReHeatingNoFH();
         elseif FH > 0
             Output = 3;
         else
@@ -39,7 +39,7 @@ function [ Rankine ] = RankineHirn( t3, p3 )
 %   - Pressure at point 3 [bar]
 %   =======================================================================
 
-n = 6;                     % number of states
+n = 6;                         % number of states
 state = State_creation(n,6,0); %Creation of the structure
 
 ind2i  = 3;
@@ -94,7 +94,7 @@ Rankine = state;
 end
 
 %% 
-function [ FHNoRH ] =  FeedHeatersNoRH(t3,p3,fh)
+function [ FHNoRH ] =  FeedHeatersNoRH( t3, p3, fh )
 % Cycle with feedheaters but no reheating
 %   Input Arguments: 
 %   - Temperature at point 3 [°C]
@@ -295,7 +295,11 @@ state{ind8}.e = Exergy(state{ind8}.h,state{ind8}.s);
 FHNoRH = state;
 end
 
-%% 
+%%
+function [ RHNoFH ] = ReHeatingNoFH()
+end
+
+%%
 function ex = Exergy (h,s)
     t0 = 273.15 + 15; %[K]
     p0 = 0.01704;
