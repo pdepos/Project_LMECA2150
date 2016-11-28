@@ -1,4 +1,4 @@
-function [ Output ] = SteamCycle( T_max, P_max, FH, RH )
+function [ Output ] = SteamCycle( T_max, T_min, P_max, FH, RH )
 %Steam Cycle
 %   Input Arguments: 
 %   - Max Steam Pressure [bar]
@@ -10,18 +10,20 @@ function [ Output ] = SteamCycle( T_max, P_max, FH, RH )
 %%
 switch RH
     case 'off' 
+        r = 0;
         if FH == 0
-            Output = RankineHirn(T_max,P_max);
+            Output = RankineHirn(T_max, T_min, P_max);
         elseif FH > 0
-            Output = FeedHeatersNoRH(T_max,P_max,FH);
+            Output = BasicFeedHeating(T_max, T_min, P_max, FH, r);
         else
             warning('Negative number of feedheaters not allowed')
         end
     case 'on'
+        r = 1;
         if FH == 0
-            Output = ReHeatingNoFH();
+            Output = BasicReHeating(T_max, T_min, P_max);
         elseif FH > 0
-            Output = 3;
+            Output = ReHeatingAndFH(T_max, T_min, P_max, FH, r);
         else
             warning('Negative number of feedheaters not allowed')
             Output = 0;
@@ -32,7 +34,7 @@ switch RH
 end
 
 %%
-function [ Rankine ] = RankineHirn( t3, p3 )
+function [ Rankine ] = RankineHirn( t_max, t_min, p_max )
 % Rankine-Hirn: Simple Rankine-Hirn cycle.
 %   Input Arguments: 
 %   - Temperature at point 3 [°C]
@@ -40,25 +42,26 @@ function [ Rankine ] = RankineHirn( t3, p3 )
 %   =======================================================================
 
 n = 6;                         % number of states
-state = State_creation(n,6,0); %Creation of the structure
+state = State_creation(n,6,0); % Creation of the structure
 
 ind2i  = 3;
 ind2ii = 4;
 ind3   = 5;
 ind4   = 6;
+eta_FWP = 0.85; % Efficiency feedwater pump
+eta_SiT = 0.88; % Isentropic Efficiency turbine
+kpdgen  = 0.90; % Pressure drop coefficient at steam generator. Determined via numerical examples in book
 
 % Point 3
-state{ind3}.t = t3;
-state{ind3}.p = p3;
+state{ind3}.t = t_max;
+state{ind3}.p = p_max;
 state{ind3}.h = XSteam('h_pT',state{ind3}.p,state{ind3}.t);
 state{ind3}.s = XSteam('s_pT',state{ind3}.p,state{ind3}.t);
 state{ind3}.e = Exergy(state{ind3}.h,state{ind3}.s);
 
 % Point 4 exit turbine
-t4 = 32;
-p4 = XSteam('psat_t',32);
-eta_SiT = 0.88; % Isentropic Efficiency turbine
-state{ind4} = turbine(state{ind3},t4,p4,eta_SiT);
+state{ind4}.p = XSteam('psat_T',t_min);
+state{ind4} = turbine(state{ind3},state{ind4},eta_SiT);
 
 % Point 1
 state{1}.t = state{ind4}.t; %A rafiner peut-etre
@@ -69,10 +72,8 @@ state{1}.s = XSteam('sL_t',state{1}.t);
 state{1}.e = Exergy(state{1}.h,state{1}.s);
 
 % Point 2 exit FWPump
-eta_FWP  = 0.85; % Efficiency feedwater pump
-kpdgen  = 0.90; % Pressure drop coefficient at steam generator. Determined via numerical examples in book
-p2 = state{ind3}.p/kpdgen;
-state{2} = pump(state{1},state{2},p2,eta_FWP);
+state{2}.p = state{ind3}.p/kpdgen;
+state{2} = pump(state{1},state{2},eta_FWP);
 
 % Point 2'
 state{ind2i}.p = state{ind3}.p;
@@ -94,7 +95,7 @@ Rankine = state;
 end
 
 %% 
-function [ FHNoRH ] =  FeedHeatersNoRH( t3, p3, fh )
+function [ BFH ] =  BasicFeedHeating( t_max, t_min, p_max, fh , rh_param)
 % Cycle with feedheaters but no reheating
 %   Input Arguments: 
 %   - Temperature at point 3 [°C]
@@ -107,13 +108,15 @@ beta  = 4;                 %Number of points per state: eg: beta = 3 means 4.1 6
                            %It's in case we need to add one to take
                            %something more into account. eg before and
                            %after isenthalpic valves
-gamma = 4;                 %Param for bache calculation
-bache_pressure = 4.6;      %Param fixing the bache pressure
+gamma    = 4;              %Param for bache calculation
+p_bache  = 4.6;            %Param fixing the bache pressure
 eta_FWP  = 0.85;           %Efficiency feedwater pump
 eta_BP   = 0.85;           %Efficiency of the Bache Pump
 eta_CP   = 0.85;           %Efficiency Condenser Pump
 kpdgen   = 0.90;           %Pressure drop coefficient at steam generator. 
                            %Determined via numerical examples in book
+ind1   = 1;
+ind2   = 2;
 ind2i  = 3;
 ind2ii = 4;
 ind3   = 5;
@@ -126,13 +129,14 @@ ind8   = 10;
 n = alpha + beta * fh;
 state = State_creation(n,alpha,beta); %Creation of the structure
 
-base = RankineHirn(t3,p3);
+base = RankineHirn(t_max,t_min,p_max);
 state{ind2i}  = base{ind2i};
 state{ind2ii} = base{ind2ii};
-state{ind5}   = base{1};
-state{ind5}.States = '5';
 state{ind3}   = base{ind3};
 state{ind4}   = base{ind4};
+state{ind5}   = base{ind1};
+state{ind5}.States = '5';
+
 
 % Les Points 4i
 for i = 1:fh
@@ -148,15 +152,26 @@ for i = 1:fh
 end
 
 % Point 1 entry FWPump
-state{1}.t = XSteam('Tsat_p',state{n-beta+1}.p) - 5;  %FWPump entry temp is sat temp of last bleed - 5°C.
-state{1}.p = XSteam('psat_T',state{1}.t) + 10;        %FWPump entry pressure above saturation pressure.
-state{1}.h = XSteam('h_pT',state{1}.p,state{1}.t);
-state{1}.s = XSteam('s_pT',state{1}.p,state{1}.t);
-state{1}.e = Exergy(state{1}.h,state{1}.s);
+if rh_param == 1;                            %If used for RH Cycle, FWP entry Temp depends on exit pressure HP Turbine
+    p_4HP = p_max / kpdgen;                  %Pressure exit HP Turbine if RH Cycle
+    state{ind1}.t = XSteam('Tsat_p',p_4HP);  %Considering the desuperheaters we decided to fix 
+                                             %this temp at the sat temp of the HP Turbine Bleed
+                                             %in approximation to what we saw in the book.
+    state{ind1}.p = XSteam('psat_T',state{ind1}.t) + 10;        %FWPump entry pressure above saturation pressure.
+    state{ind1}.h = XSteam('h_pT',state{ind1}.p,state{ind1}.t);
+    state{ind1}.s = XSteam('s_pT',state{ind1}.p,state{ind1}.t);
+    state{ind1}.e = Exergy(state{ind1}.h,state{ind1}.s);
+else
+    state{ind1}.t = XSteam('Tsat_p',state{n-beta+1}.p) - 5;     %FWPump entry temp is sat temp of last bleed - 5°C.
+    state{ind1}.p = XSteam('psat_T',state{ind1}.t) + 2;        %FWPump entry pressure above saturation pressure.
+    state{ind1}.h = XSteam('h_pT',state{ind1}.p,state{ind1}.t);
+    state{ind1}.s = XSteam('s_pT',state{ind1}.p,state{ind1}.t);
+    state{ind1}.e = Exergy(state{ind1}.h,state{ind1}.s);
+end
 
 % Point 2 exit FWPump
-p2 = state{ind3}.p/kpdgen;
-state{2} = pump(state{1},state{2},p2,eta_FWP);
+state{ind2}.p = state{ind3}.p/kpdgen;
+state{ind2} = pump(state{ind1},state{ind2},eta_FWP);
 
 
 position_bache = 1;               %References the roman number of the schematic
@@ -176,7 +191,7 @@ if fh > gamma                     %Finding the bache if the number of bleeds is 
         
         if i == position_bache
             % Bache exit conditions point 8.bache = 7.bache because no valve
-            state{index_exit_bache}.p = bache_pressure;          % Fixed pressure inside the bache
+            state{index_exit_bache}.p = p_bache;          % Fixed pressure inside the bache
             state{index_exit_bache}.t = XSteam('Tsat_p',state{index_exit_bache}.p);
             state{index_exit_bache}.h = XSteam('hL_p',state{index_exit_bache}.p);
             state{index_exit_bache}.s = XSteam('sL_p',state{index_exit_bache}.p);
@@ -208,7 +223,7 @@ if fh > gamma                     %Finding the bache if the number of bleeds is 
     
     % Point 6.0 (exit Condensor Pump)
     state{ind6}.p = state{index_exit_bache}.p;
-    state{ind6} = pump(state{ind5},state{ind6},state{ind6}.p,eta_CP);
+    state{ind6} = pump(state{ind5},state{ind6},eta_CP);
     
     % Points 6.i FW circuit except the first one at this stage
     for i = 2:fh
@@ -222,10 +237,10 @@ if fh > gamma                     %Finding the bache if the number of bleeds is 
             state{ind6i}.s = XSteam('s_pT',state{ind6i}.p,state{ind6i}.t);
             state{ind6i}.e = Exergy(state{ind6i}.h,state{ind6i}.s);
         elseif (i == position_bache + 1)   % Point 6 behind Bache Pump
-            state{ind6i}.p = state{1}.p;
-            state{ind6i} = pump(state{ind7i},state{ind6i},state{ind6i}.p,eta_BP);
+            state{ind6i}.p = state{ind1}.p;
+            state{ind6i} = pump(state{ind7i},state{ind6i},eta_BP);
         else                               % Points 6.i behind the bache pump
-            state{ind6i}.p = state{1}.p;
+            state{ind6i}.p = state{ind1}.p;
             state{ind6i}.t = state{ind7i}.t - 5;
             state{ind6i}.h = XSteam('h_pT',state{ind6i}.p,state{ind6i}.t);
             state{ind6i}.s = XSteam('s_pT',state{ind6i}.p,state{ind6i}.t);
@@ -258,8 +273,8 @@ else  %Without bache
     end
             
     % Point 6.0 (exit Condensor Pump) 
-    state{ind6}.p = state{1}.p;
-    state{ind6} = pump(state{ind5},state{ind6},state{ind6}.p,eta_CP);
+    state{ind6}.p = state{ind1}.p;
+    state{ind6} = pump(state{ind5},state{ind6},eta_CP);
     
     % Points 6.i FW circuit except the first one at this stage
     for i = 2:fh
@@ -291,12 +306,188 @@ state{ind8}.s = XSteam('s_ph',state{ind8}.p,state{ind8}.h);
 state{ind8}.e = Exergy(state{ind8}.h,state{ind8}.s);
 
 
-
-FHNoRH = state;
+BFH = state;
 end
 
 %%
-function [ RHNoFH ] = ReHeatingNoFH()
+function [ RHNoFH ] = ReHeatingNoFH( t_max, t_min, hp )
+  
+ind1    = 1;
+ind2    = 2;
+ind2i   = 3;
+ind2ii  = 4;
+ind3HP  = 5;
+ind4HP  = 6;
+ind3LP  = 7;
+ind4LP  = 8;
+
+p_3LP     = 0.14*hp;
+kpdgen    = 0.90;
+eta_SiTHP = 0.90; % Isentropic Efficiency HP Turbine
+eta_SiTLP = 0.88; % Isentropic Efficiency LP Turbine
+eta_FWP   = 0.85;
+
+n = 8;
+state = State_creation(n,n,0);
+
+% Point 3HP
+state{ind3HP}.p = hp;
+state{ind3HP}.t = t_max;
+state{ind3HP}.h = XSteam('h_pT',state{ind3HP}.p,state{ind3HP}.t);
+state{ind3HP}.s = XSteam('s_pT',state{ind3HP}.p,state{ind3HP}.t);
+state{ind3HP}.e = Exergy(state{ind3HP}.h,state{ind3HP}.s);
+
+% Point 4HP
+state{ind4HP}.p = p_3LP / kpdgen;
+state{ind4HP} = turbine(state{ind3HP},state{ind4HP},eta_SiTHP);
+
+% Point 3LP
+state{ind3LP}.p = p_3LP;
+state{ind3LP}.t = t_max;
+state{ind3LP}.h = XSteam('h_pT',state{ind3LP}.p,state{ind3LP}.t);
+state{ind3LP}.s = XSteam('s_pT',state{ind3LP}.p,state{ind3LP}.t);
+state{ind3LP}.e = Exergy(state{ind3LP}.h,state{ind3LP}.s);
+
+% Point 4LP
+state{ind4LP}.p = XSteam('Psat_T',t_min);
+state{ind4LP} = turbine(state{ind3LP},state{ind4LP},eta_SiTLP);
+
+% Point 1
+state{ind1}.t = state{ind4LP}.t;
+state{ind1}.p = state{ind4LP}.p;
+state{ind1}.x = 0;
+state{ind1}.h = XSteam('hL_T',state{ind1}.t);
+state{ind1}.s = XSteam('sL_t',state{ind1}.t);
+state{ind1}.e = Exergy(state{ind1}.h,state{ind1}.s);
+
+% Point 2 exit FWPump
+state{ind2}.p = state{ind3HP}.p/kpdgen;
+state{ind2} = pump(state{ind1},state{ind2},eta_FWP);
+
+% Point 2'
+state{ind2i}.p = state{ind3HP}.p;
+state{ind2i}.t = XSteam('Tsat_p',state{ind2i}.p);
+state{ind2i}.x = 0;
+state{ind2i}.h = XSteam('hL_p',state{ind2i}.p);
+state{ind2i}.s = XSteam('sL_p',state{ind2i}.p);
+state{ind2i}.e = Exergy(state{ind2i}.h,state{ind2i}.s);
+
+% Point 2''
+state{ind2ii}.p = state{ind3HP}.p;
+state{ind2ii}.t = XSteam('Tsat_p',state{ind2ii}.p);
+state{ind2ii}.x = 1;
+state{ind2ii}.h = XSteam('hV_p',state{ind2ii}.p);
+state{ind2ii}.s = XSteam('sV_p',state{ind2ii}.p);
+state{ind2ii}.e = Exergy(state{ind2ii}.h,state{ind2ii}.s);
+
+RHNoFH = state;
+end
+
+%%
+function [ RHandFH ] = ReHeatingAndFH( t_max, t_min, hp, fh, rh_param )
+alpha = 12;                %Number of fixed points of the schematic
+beta  = 4;                 %Number of points per state: eg: beta = 3 means 4.1 6.1 7.1 or 4.2 6.2 7.2 
+                           %It's in case we need to add one to take
+                           %something more into account. eg before and
+                           %after isenthalpic valves
+alpha_FH_base = 10;        %Fixed points in simple FH function to get the indexes in the FH_base
+gamma     = 4;             %Param for bache calculation
+p_3LP     = 0.14*hp;      %Pressure exit HP turbine
+p_bache   = 4.6;           %Param fixing the bache pressure
+eta_SiTHP = 0.90;          %Isentropic Efficiency HP Turbine
+eta_SiTLP = 0.88;          %Isentropic Efficiency LP Turbine
+eta_FWP   = 0.85;          %Efficiency feedwater pump
+eta_BP    = 0.85;          %Efficiency of the Bache Pump
+eta_CP    = 0.85;          %Efficiency Condenser Pump
+kpdgen    = 0.90;          %Pressure drop coefficient at steam generator. 
+                           %Determined via numerical examples in book
+ind1    = 1;
+ind2    = 2;
+ind2i   = 3;
+ind2ii  = 4;
+ind3HP  = 5;
+ind4HP  = 6;
+ind3LP  = 7;
+ind4LP  = 8;
+ind5    = 9;
+ind6    = 10;
+ind7    = 11;
+ind8    = 12;
+
+n = alpha + beta * fh + 4;            % + 4 because we consider the HP bleed outside of the LP bleeds. 
+state = State_creation(n,alpha,beta); %Creation of the structure
+
+% Base Points of the ReHeating Cycle
+RH_base = ReHeatingNoFH(t_max,t_min,hp);
+state{ind2i}  = RH_base{ind2i};
+state{ind2ii} = RH_base{ind2ii};
+state{ind3HP} = RH_base{ind3HP};
+state{ind4HP} = RH_base{ind4HP};
+state{ind3LP} = RH_base{ind3LP};
+state{ind4LP} = RH_base{ind4LP};
+
+% Points of the Feed Heating Cycle
+FH_base = BasicFeedHeating(t_max,t_min,state{ind3LP}.p,fh,rh_param);
+state{ind1} = FH_base{ind1};
+state{ind2}.p = hp / kpdgen;
+state{ind2} = pump(state{ind1},state{ind2},eta_FWP);
+
+state{ind5} = FH_base{ind5-2};
+state{ind6} = FH_base{ind6-2};
+state{ind7} = FH_base{ind7-2};
+state{ind8} = FH_base{ind8-2};
+
+for i = 1:fh
+    % Points 4.i
+    ind4i = alpha + beta*(i-1) + 1;
+    ind4i_base = alpha_FH_base + beta*(i-1) + 1;
+    state{ind4i} = FH_base{ind4i_base};
+    
+    % Points 6.i
+    ind6i = alpha + beta*(i-1) + 2;
+    ind6i_base = alpha_FH_base + beta*(i-1) + 2;
+    state{ind6i} = FH_base{ind6i_base};
+    
+    % Points 7.i 
+    ind7i = alpha + beta*(i-1) + 3;
+    ind7i_base = alpha_FH_base + beta*(i-1) + 3;
+    state{ind7i} = FH_base{ind7i_base};
+    
+    % Points 8.i
+    ind8i = alpha + beta*(i-1) + 4;
+    ind8i_base = alpha_FH_base + beta*(i-1) + 4;
+    state{ind8i} = FH_base{ind8i_base};
+end
+
+% Points around the HP Bleed
+% Point 4HP 
+state{n - beta + 1} = state{ind4HP};
+
+% Point 7HP
+state{n - beta + 3}.p = state{n - beta + 1}.p;
+state{n - beta + 3}.t = XSteam('Tsat_p',state{n - beta + 3}.p);
+state{n - beta + 3}.x = 0;
+state{n - beta + 3}.h = XSteam('hL_p',state{n - beta + 3}.p);
+state{n - beta + 3}.s = XSteam('sL_p',state{n - beta + 3}.p);
+state{n - beta + 3}.e = Exergy(state{n - beta + 3}.h,state{n - beta + 3}.s);
+
+% Point 8HP
+state{n - beta + 4}.p = state{n - 2*beta + 1}.p;
+state{n - beta + 4}.t = state{n - beta + 3}.t;
+state{n - beta + 4}.h = state{n - beta + 3}.h;
+state{n - beta + 4}.x = XSteam('x_ph',state{n - beta + 4}.p,state{n - beta + 4}.h);
+state{n - beta + 4}.s = XSteam('s_ph',state{n - beta + 4}.p,state{n - beta + 4}.h);
+state{n - beta + 4}.e = Exergy(state{n - beta + 4}.h,state{n - beta + 4}.s);
+  
+% Point 6HP
+state{n - beta + 2}.p = state{ind1}.p;
+state{n - beta + 2}.t = state{n - 2*beta + 3}.t - 5;
+state{n - beta + 2}.h = XSteam('h_pT',state{n - beta + 2}.p,state{n - beta + 2}.t);
+state{n - beta + 2}.s = XSteam('s_pT',state{n - beta + 2}.p,state{n - beta + 2}.t);
+state{n - beta + 2}.e = Exergy(state{n - beta + 2}.h,state{n - beta + 2}.s);
+
+
+RHandFH = state;
 end
 
 %%
@@ -309,27 +500,30 @@ function ex = Exergy (h,s)
 end
 
 function muT = muT(t)
-% Function to extrapolate the value of muT of water at different temperatures
+% Function to extrapolate the value of muT [kJ/kg bar] of water at different temperatures
 % using values of the LMECA1855 exercice book at 30 bar. Pressure has not a
-% big effect on muT
+% big effect on muT.
 % Input Variables:
 %   - Temperature of the water. Max temp = 230 °C
 % =========================================================================
-   
-    T   = [0.02 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 180 190 200 210 220 230];
-    MuT = [0.10140 0.09720 0.09385 0.09101 0.08847 0.08614 0.08392 0.08175 ...
-           0.07960 0.07743 0.07520 0.07288 0.07044 0.06784 0.06504 0.06300 ...
-           0.05865 0.05494 0.05079 0.04610 0.04073 0.03454 0.02730 0.01871];
-    
-    ind = 1;
-    while t > T(ind) %ind will be the index of the closest higher temp of the test temp. 
-        ind = ind + 1;
-    end
-muT = (MuT(ind) - MuT(ind-1)) * (t - T(ind-1)) / 10 + MuT(ind-1);
+    if t > 230
+        warning('Max value of temperature exceded. T_max = 230. muT approximated to its value at 230 °C!');
+        muT = 0.01871;
+    else
+        T   = [0.02 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 180 190 200 210 220 230];
+        MuT = [0.10140 0.09720 0.09385 0.09101 0.08847 0.08614 0.08392 0.08175 ...
+               0.07960 0.07743 0.07520 0.07288 0.07044 0.06784 0.06504 0.06300 ...
+               0.05865 0.05494 0.05079 0.04610 0.04073 0.03454 0.02730 0.01871];
 
+        ind = 1;
+        while t > T(ind) %ind will be the index of the closest higher temp of the test temp. 
+            ind = ind + 1;
+        end
+        muT = (MuT(ind) - MuT(ind-1)) * (t - T(ind-1)) / 10 + MuT(ind-1);
+    end
 end
 
-function Output = pump(state_in,state_out,p,eta)
+function Output = pump(state_in,state_out,eta)
 % Function calculating the output state of a pump.
 % Input Variables:
 %   - State at entrance of the pump
@@ -337,50 +531,39 @@ function Output = pump(state_in,state_out,p,eta)
 %   - Efficiency of the pump
 % =========================================================================
     
-v_LH2O   = 0.001005; %[m³/kg] volume massique de l'eau
+    v_LH2O   = 0.001005; %[m³/kg] volume massique de l'eau
 
-state_out.States = state_out.States;
-state_out.p = p;
-state_out.h = v_LH2O * (state_out.p - state_in.p)*100 / eta + state_in.h; % *e2 pour obtenir kJ/kg (si e5 on obtient des joules..)
-muT            = muT(state_in.t);                                           % muT approx with temp before pump
-cp2            = (XSteam('Cp_pT',state_out.p,state_in.t) + XSteam('CpL_p',state_in.p)) / 2; 
-state_out.t = state_in.t + (v_LH2O*100 - muT)*(state_out.p - state_in.p)/ (cp2);
-state_out.s = XSteam ('s_pT',state_out.p,state_out.t);
-state_out.e = Exergy(state_out.h,state_out.s);
+    state_out.h = v_LH2O * (state_out.p - state_in.p)*100 / eta + state_in.h; % *e2 pour obtenir kJ/kg (si e5 on obtient des joules..)
+    muT            = muT(state_in.t);                                           % muT approx with temp before pump
+    cp2            = (XSteam('Cp_pT',state_out.p,state_in.t) + XSteam('CpL_p',state_in.p)) / 2; 
+    state_out.t = state_in.t + (v_LH2O*100 - muT)*(state_out.p - state_in.p)/ (cp2);
+    state_out.s = XSteam ('s_pT',state_out.p,state_out.t);
+    state_out.e = Exergy(state_out.h,state_out.s);
 
-Output = state_out;
+    Output = state_out;
 end
 
-function Output = turbine (state,t_low,p_low,eta)
+function Output = turbine (state_in,state_out,eta)
 % Function calculating the output state of a turbine.
 % Input Variables:
-%   - State at entrance of the turbine
-%   - Exit temperature
-%   - Exit pressure
+%   - State at entrance of the turbine. Defines entry entropy and enthalpy
+%   - State at exit turbine. Defines exit pressure
 %   - Isentropic efficiency of the turbine
 % =========================================================================
-   
-    state_out = State_creation(1,1,1);
-    
-    state_out{1}.States = state.States + 1;
-    state_out{1}.t = t_low;
-    state_out{1}.p = p_low;
-    s_isos  = state.s;
-    
-    t_sat_test = XSteam('Tsat_p',p_low);
-    if t_low < t_sat_test
-        x_isos  = XSteam('x_ps',p_low,s_isos); % - XSteam('sL_T',state_out{1}.t)) / (XSteam('sV_T',state_out{1}.t) - XSteam('sL_T',state_out{1}.t));
-        h_isos  = XSteam('h_px',p_low,x_isos); % x4s*XSteam('hV_T',state_out{1}.t) + (1-x4s)*XSteam('hL_T',state_out{1}.t);
+
+    h_isos  = XSteam('h_ps',state_out.p,state_in.s);    
+    state_out.h = eta*(h_isos - state_in.h) + state_in.h;   
+    state_out.s = XSteam('s_ph',state_out.p,state_out.h);   
+    state_out.t = XSteam('T_ph',state_out.p,state_out.h);
+    state_out.e = Exergy(state_out.h,state_out.s);
+
+    if state_out.t == XSteam('Tsat_p',state_out.p);
+        state_out.x = XSteam('x_ph',state_out.p,state_out.h);
     else
-        h_isos  = XSteam('h_ps',p_low,s_isos);
+        state_out.x = NaN;
     end
 
-    state_out{1}.h = eta*(h_isos - state.h) + state.h;
-    state_out{1}.x = XSteam('x_ph',state_out{1}.p,state_out{1}.h);
-    state_out{1}.s = state_out{1}.x*XSteam('sV_T',state_out{1}.t) + (1 - state_out{1}.x)*XSteam('sL_T',state_out{1}.t);
-    state_out{1}.e = Exergy(state_out{1}.h,state_out{1}.s);
-    
-    Output =  state_out{1};
+    Output =  state_out;
 end
 
 end

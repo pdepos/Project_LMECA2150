@@ -12,7 +12,7 @@ function State = State_creation(n,alpha,beta)
 
 State = cell(n,1);
 
-if (alpha == 10) || (alpha == 6)
+if (alpha == 10) || (alpha == 6) % Simple Cycle or Cycle with FH
     for i = 1:n
         if i <= 2
             formatSpec1 = '%d';
@@ -47,6 +47,38 @@ if (alpha == 10) || (alpha == 6)
             State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
         end
     end
+elseif alpha == 8                % Simple RH Cycle 
+     for i = 1:n
+        if i <= 2
+            formatSpec1 = '%d';
+            str1 = sprintf(formatSpec1,i);
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        elseif i == 3
+            formatSpec1 = '%d''';
+            str1 = sprintf(formatSpec1,2);
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        elseif i == 4
+            formatSpec1 = '%d%s';
+            str1 = sprintf(formatSpec1,2,'"');
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        elseif i == 5
+            formatSpec1 = '%d%s';
+            str1 = sprintf(formatSpec1,3,'HP');
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        elseif i == 6
+            formatSpec1 = '%d%s';
+            str1 = sprintf(formatSpec1,4,'HP');
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        elseif i == 7
+            formatSpec1 = '%d%s';
+            str1 = sprintf(formatSpec1,3,'LP');
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        elseif i == 8
+            formatSpec1 = '%d%s';
+            str1 = sprintf(formatSpec1,4,'LP');
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        end
+    end
 elseif alpha == 12
      for i = 1:n
         if i <= 2
@@ -61,13 +93,29 @@ elseif alpha == 12
             formatSpec1 = '%d%s';
             str1 = sprintf(formatSpec1,2,'"');
             State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
-        elseif (i > 4) && ( i <= alpha)
+        elseif i == 5
+            formatSpec1 = '%d%s';
+            str1 = sprintf(formatSpec1,3,'HP');
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        elseif i == 6
+            formatSpec1 = '%d%s';
+            str1 = sprintf(formatSpec1,4,'HP');
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        elseif i == 7
+            formatSpec1 = '%d%s';
+            str1 = sprintf(formatSpec1,3,'LP');
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        elseif i == 8
+            formatSpec1 = '%d%s';
+            str1 = sprintf(formatSpec1,4,'LP');
+            State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
+        elseif (i > 8) && ( i <= alpha)
             formatSpec1 = '%d';
-            str1 = sprintf(formatSpec1,i-2);
+            str1 = sprintf(formatSpec1,i-4);
             State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
         elseif i > alpha
             formatSpec1 = '%d.%d';
-            modulo = mod((i-2),beta);
+            modulo = mod(i,beta);
             if modulo == 1
                 a = 4;
             elseif modulo == 2
@@ -77,7 +125,7 @@ elseif alpha == 12
             elseif modulo == 0
                 a = 8;
             end
-            roman_index = floor((i-3)./beta)-1;
+            roman_index = floor((i-1)./beta)-2;
             str1 = sprintf(formatSpec1,a,roman_index);
             State{i} = struct('States',str1,'t',0,'p',0,'x',NaN,'h',0,'s',0,'e',0);
         end
