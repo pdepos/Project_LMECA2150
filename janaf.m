@@ -51,7 +51,7 @@ for i=1:length(T)
         out(z)=calc(ai, T(i), prop, MWeight);
         z=z+1;
     else 
-        sprintf(['Temperature ' num2str(T(i)) 'K not between 300K and 5000K!'])
+        sprintf(['Temperature ' num2str(T(i)) 'K not between 270K and 5000K!'])
     end
 end
     

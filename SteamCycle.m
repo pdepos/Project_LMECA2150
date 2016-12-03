@@ -182,7 +182,7 @@ if fh > gamma                     %Finding the bache if the number of bleeds is 
         position_bache = position_bache + 1;
         index_bleed_bache = index_bleed_bache + beta;
     end
-    index_exit_bache = alpha + beta*position_bache; %References the exit of the bache 
+    index_exit_bache = alpha + beta*position_bache; %References the exit 8bache of the bache 
     
     for i = 1:fh
         ind7i = alpha + beta*i - 1;
@@ -493,34 +493,9 @@ end
 %%
 function ex = Exergy (h,s)
     t0 = 273.15 + 15; %[K]
-    p0 = 0.01704;
     h0 = 63.0;
     s0 = 0.224;
     ex = h - h0 - t0*(s - s0);
-end
-
-function muT = muT(t)
-% Function to extrapolate the value of muT [kJ/kg bar] of water at different temperatures
-% using values of the LMECA1855 exercice book at 30 bar. Pressure has not a
-% big effect on muT.
-% Input Variables:
-%   - Temperature of the water. Max temp = 230 °C
-% =========================================================================
-    if t > 230
-        warning('Max value of temperature exceded. T_max = 230. muT approximated to its value at 230 °C!');
-        muT = 0.01871;
-    else
-        T   = [0.02 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 180 190 200 210 220 230];
-        MuT = [0.10140 0.09720 0.09385 0.09101 0.08847 0.08614 0.08392 0.08175 ...
-               0.07960 0.07743 0.07520 0.07288 0.07044 0.06784 0.06504 0.06300 ...
-               0.05865 0.05494 0.05079 0.04610 0.04073 0.03454 0.02730 0.01871];
-
-        ind = 1;
-        while t > T(ind) %ind will be the index of the closest higher temp of the test temp. 
-            ind = ind + 1;
-        end
-        muT = (MuT(ind) - MuT(ind-1)) * (t - T(ind-1)) / 10 + MuT(ind-1);
-    end
 end
 
 function Output = pump(state_in,state_out,eta)
@@ -534,10 +509,8 @@ function Output = pump(state_in,state_out,eta)
     v_LH2O   = 0.001005; %[m³/kg] volume massique de l'eau
 
     state_out.h = v_LH2O * (state_out.p - state_in.p)*100 / eta + state_in.h; % *e2 pour obtenir kJ/kg (si e5 on obtient des joules..)
-    muT            = muT(state_in.t);                                           % muT approx with temp before pump
-    cp2            = (XSteam('Cp_pT',state_out.p,state_in.t) + XSteam('CpL_p',state_in.p)) / 2; 
-    state_out.t = state_in.t + (v_LH2O*100 - muT)*(state_out.p - state_in.p)/ (cp2);
-    state_out.s = XSteam ('s_pT',state_out.p,state_out.t);
+    state_out.t = XSteam('T_ph',state_out.p,state_out.h);
+    state_out.s = XSteam ('s_ph',state_out.p,state_out.h);
     state_out.e = Exergy(state_out.h,state_out.s);
 
     Output = state_out;
