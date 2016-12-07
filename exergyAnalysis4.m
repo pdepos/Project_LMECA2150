@@ -1,8 +1,8 @@
-function [Exergy_losses,labels_Ex,etaMec,etaRotex,etaCyclex,etaCombex,etaTotex] = exergyAnalysis4(state,ma,mc,mg,x,y,z,Pe)
+function [Exergy_losses,labels_Ex,etaMec,etaRotex,etaCyclex,etaCombex,etaTotex] = exergyAnalysis4(state,ma,mc,mg,x,y,z,Pe,fuel)
 
 
 %%%% exergy of the fuel %%%%
-ec = fuel_exergy(x,y,z); % [kJ/kg]
+ec = fuel_exergy(x,y,z,fuel); % [kJ/kg]
 
 %%%% work and power %%%%
 WmT = state{3}.h - state{4}.h; % turbine work [kJ/kg]

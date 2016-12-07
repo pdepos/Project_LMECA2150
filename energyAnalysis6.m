@@ -1,4 +1,4 @@
-function [Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten] = energyAnalysis6(state,ma,mc,mg,Pe,x,y,z)
+function [Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten] = energyAnalysis6(state,ma,mc,mg,Pe,x,y,z,fuel)
 % INPUTS :
 %   - state : cell array containing all the state characteristics with T in
 %             [K], p in [bar], h in [kJ/kg], s in [kJ/(Kg*K)] and e in [kJ/kg]
@@ -9,8 +9,13 @@ function [Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten] = energyAnalysi
 
 %%%% Fuel characteristics %%%%
 Mfuel = x*12+y+z*16; % molar mass
-DrH = 282.4*((2*z+y*x-y)/(2+y)) + ((2*x-2*z+y)/(2+y))*((1-y/4)*393.4 + (y/4)*802.4);
-LHV = (DrH/Mfuel)*10^3; %[kJ/kg] --> lower heating value
+if strcmp(fuel,'CH4')
+    LHV = 50.1*10^3; %[kJ/kg]
+elseif strcmp(fuel,'C12H23')
+    LHV = 41.76*10^3; %[kJ/kg]
+end
+% DrH = 282.4*((2*z+y*x-y)/(2+y)) + ((2*x-2*z+y)/(2+y))*((1-y/4)*393.4 + (y/4)*802.4);
+% LHV = (DrH/Mfuel)*10^3; %[kJ/kg] --> lower heating value
 
 %%%% Energy analysis %%%%
 WmT = state{4}.h - state{5}.h; % turbine work [kJ/kg]
