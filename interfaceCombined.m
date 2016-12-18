@@ -22,7 +22,7 @@ function varargout = interfaceCombined(varargin)
 
 % Edit the above text to modify the response to help interfaceCombined
 
-% Last Modified by GUIDE v2.5 07-Dec-2016 22:33:31
+% Last Modified by GUIDE v2.5 17-Dec-2016 15:11:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -205,123 +205,125 @@ function simulate_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%%%% record data %%%%
-T1g = handles.metricdata.T1g;
-r = handles.metricdata.r;
-Peg = handles.metricdata.Peg;
-kcc = handles.metricdata.kcc;
-T3g = handles.metricdata.T3g;
-DTa = handles.metricdata.DTa;
-DTlp = handles.metricdata.DTlp;
-DThp = handles.metricdata.DThp;
-pLP = handles.metricdata.pLP;
-pHP = handles.metricdata.pHP;
-Tw = handles.metricdata.Tw;
-
-fuel = get(handles.fuel,'SelectedObject');
-if fuel == handles.gas
-    x = 1;
-    y = 4;
-    z = 0;
-    comb = 'CH4';
-elseif fuel == handles.diesel
-    x = 12;
-    y = 23;
-    z = 0;
-    comb = 'C12H23';
-end
- 
-%%%% simulation %%%%
-
-[stateV,stateTG,Energy_lossesTGV,labels_EnergyTGV,Exergy_lossesTGV,labels_ExTGV,massFlow,energyEff,exergyEff] = ...
-    mainCombined2(Peg,pHP,pLP,Tw,DTa,DTlp,DThp,x,y,z,T1g,r,kcc,T3g,comb);
-
-%%%% plot data %%%%
-
-% Gas states
-stateTGmat = zeros(5,5);
-for i =1:5
-   stateTGmat(i,:) = [stateTG{i}.T stateTG{i}.p stateTG{i}.h stateTG{i}.s stateTG{i}.e];  
-end
-set(handles.TabTG,'Data',stateTGmat);
-
-% Steam states
-stateVmat = cell(10,6);
-%stateVmat = zeros(10,6);
-for i = 1:10
-   %stateVmat{i,:} = [stateV{i}.T stateV{i}.p stateV{i}.h stateV{i}.s stateV{i}.e stateV{i}.x];
-   stateVmat{i,1} = stateV{i}.T;
-   stateVmat{i,2} = stateV{i}.p;
-   stateVmat{i,3} = stateV{i}.h;
-   stateVmat{i,4} = stateV{i}.s;
-   stateVmat{i,5} = stateV{i}.e;
-   if isfinite(stateV{i}.x)
-    stateVmat{i,6} = stateV{i}.x;
-   else
-       stateVmat{i,6} = '                     -';
-   end
-end
-set(handles.TabV,'Data',stateVmat);
-
-% Mass flows
-ma = massFlow(1);
-mg = massFlow(3);
-mc = massFlow(2);
-mvLP = massFlow(5);
-mvHP = massFlow(4);
-
-set(handles.mav,'String',ma);
-set(handles.mcv,'String',mc);
-set(handles.mgv,'String',mg);
-set(handles.mHPv,'String',mvHP);
-set(handles.mLPv,'String',mvLP);
-set(handles.mTotv,'String',mvLP+mvHP);
-
-% Energy analysis
-etaMecV = energyEff(1);
-etaCyclenV = energyEff(2);
-etaTotenV = energyEff(3);
-etaTotenTGV = energyEff(4);
-etaMecTG = energyEff(5);
-etaCyclenTG = energyEff(6);
-etaTotenTG = energyEff(7);
-
-set(handles.etaMecenVv,'String',etaMecV);
-set(handles.etaCyclenVv,'String',etaCyclenV);
-set(handles.etaTotenVv,'String',etaTotenV);
-set(handles.etaTotenTGVv,'String',etaTotenTGV);
-set(handles.etaMecenTGv,'String',etaMecTG);
-set(handles.etaCyclenTGv,'String',etaCyclenTG);
-set(handles.etaTotenTGv,'String',etaTotenTG);
-
-% Exergy analysis
-
-etaMecTG = exergyEff(1);
-etaRotexTG = exergyEff(2);
-etaCyclexTG = exergyEff(3);
-etaCombexTG = exergyEff(4);
-etaTotexTG = exergyEff(5);
-etaRotexV = exergyEff(6);
-etaCyclexV = exergyEff(7);
-etaTransexV = exergyEff(8);
-etaTotexV = exergyEff(9);
-etaTotexTGV = exergyEff(10);
-
-set(handles.etaMecexTGv,'String',etaMecTG);
-set(handles.etaRotexTGv,'String',etaRotexTG);
-set(handles.etaCyclexTGv,'String',etaCyclexTG);
-set(handles.etaCombexTGv,'String',etaCombexTG);
-set(handles.etaTotexTGv,'String',etaTotexTG);
-set(handles.etaTotenTGv,'String',etaTotenTG);
-set(handles.etaMecexVv,'String',etaMecV);
-set(handles.etaRotexVv,'String',etaRotexV);
-set(handles.etaCyclexVv,'String',etaCyclexV);
-set(handles.etaTransexVv,'String',etaTransexV);
-set(handles.etaTotexVv,'String',etaTotexV);
-set(handles.etaTotexTGVv,'String',etaTotexTGV);
-
-% Graph 1
-graph1 = get(handles.choix1,'SelectedObject');
+if get(handles.level,'Value')==0
+    
+    %%%% record data %%%%
+    T1g = handles.metricdata.T1g;
+    r = handles.metricdata.r;
+    Peg = handles.metricdata.Peg;
+    kcc = handles.metricdata.kcc;
+    T3g = handles.metricdata.T3g;
+    DTa = handles.metricdata.DTa;
+    DTlp = handles.metricdata.DTlp;
+    DThp = handles.metricdata.DThp;
+    pLP = handles.metricdata.pLP;
+    pHP = handles.metricdata.pHP;
+    Tw = handles.metricdata.Tw;
+    
+    fuel = get(handles.fuel,'SelectedObject');
+    if fuel == handles.gas
+        x = 1;
+        y = 4;
+        z = 0;
+        comb = 'CH4';
+    elseif fuel == handles.diesel
+        x = 12;
+        y = 23;
+        z = 0;
+        comb = 'C12H23';
+    end
+    
+    %%%% simulation %%%%
+    
+    [stateV,stateTG,Energy_lossesTGV,labels_EnergyTGV,Exergy_lossesTGV,labels_ExTGV,massFlow,energyEff,exergyEff] = ...
+        mainCombined2(Peg,pHP,pLP,Tw,DTa,DTlp,DThp,x,y,z,T1g,r,kcc,T3g,comb);
+    
+    %%%% plot data %%%%
+    
+    % Gas states
+    stateTGmat = zeros(5,5);
+    for i =1:5
+        stateTGmat(i,:) = [stateTG{i}.T stateTG{i}.p stateTG{i}.h stateTG{i}.s stateTG{i}.e];
+    end
+    set(handles.TabTG,'Data',stateTGmat);
+    
+    % Steam states
+    stateVmat = cell(10,6);
+    %stateVmat = zeros(10,6);
+    for i = 1:10
+        %stateVmat{i,:} = [stateV{i}.T stateV{i}.p stateV{i}.h stateV{i}.s stateV{i}.e stateV{i}.x];
+        stateVmat{i,1} = stateV{i}.T;
+        stateVmat{i,2} = stateV{i}.p;
+        stateVmat{i,3} = stateV{i}.h;
+        stateVmat{i,4} = stateV{i}.s;
+        stateVmat{i,5} = stateV{i}.e;
+        if isfinite(stateV{i}.x)
+            stateVmat{i,6} = stateV{i}.x;
+        else
+            stateVmat{i,6} = '                     -';
+        end
+    end
+    set(handles.TabV,'Data',stateVmat);
+    
+    % Mass flows
+    ma = massFlow(1);
+    mg = massFlow(3);
+    mc = massFlow(2);
+    mvLP = massFlow(5);
+    mvHP = massFlow(4);
+    
+    set(handles.mav,'String',ma);
+    set(handles.mcv,'String',mc);
+    set(handles.mgv,'String',mg);
+    set(handles.mHPv,'String',mvHP);
+    set(handles.mLPv,'String',mvLP);
+    set(handles.mTotv,'String',mvLP+mvHP);
+    
+    % Energy analysis
+    etaMecV = energyEff(1);
+    etaCyclenV = energyEff(2);
+    etaTotenV = energyEff(3);
+    etaTotenTGV = energyEff(4);
+    etaMecTG = energyEff(5);
+    etaCyclenTG = energyEff(6);
+    etaTotenTG = energyEff(7);
+    
+    set(handles.etaMecenVv,'String',etaMecV);
+    set(handles.etaCyclenVv,'String',etaCyclenV);
+    set(handles.etaTotenVv,'String',etaTotenV);
+    set(handles.etaTotenTGVv,'String',etaTotenTGV);
+    set(handles.etaMecenTGv,'String',etaMecTG);
+    set(handles.etaCyclenTGv,'String',etaCyclenTG);
+    set(handles.etaTotenTGv,'String',etaTotenTG);
+    
+    % Exergy analysis
+    
+    etaMecTG = exergyEff(1);
+    etaRotexTG = exergyEff(2);
+    etaCyclexTG = exergyEff(3);
+    etaCombexTG = exergyEff(4);
+    etaTotexTG = exergyEff(5);
+    etaRotexV = exergyEff(6);
+    etaCyclexV = exergyEff(7);
+    etaTransexV = exergyEff(8);
+    etaTotexV = exergyEff(9);
+    etaTotexTGV = exergyEff(10);
+    
+    set(handles.etaMecexTGv,'String',etaMecTG);
+    set(handles.etaRotexTGv,'String',etaRotexTG);
+    set(handles.etaCyclexTGv,'String',etaCyclexTG);
+    set(handles.etaCombexTGv,'String',etaCombexTG);
+    set(handles.etaTotexTGv,'String',etaTotexTG);
+    set(handles.etaTotenTGv,'String',etaTotenTG);
+    set(handles.etaMecexVv,'String',etaMecV);
+    set(handles.etaRotexVv,'String',etaRotexV);
+    set(handles.etaCyclexVv,'String',etaCyclexV);
+    set(handles.etaTransexVv,'String',etaTransexV);
+    set(handles.etaTotexVv,'String',etaTotexV);
+    set(handles.etaTotexTGVv,'String',etaTotexTGV);
+    
+    % Graph 1
+    graph1 = get(handles.choix1,'SelectedObject');
     if graph1 == handles.energy1
         axes(handles.graph1);
         En = pie(Energy_lossesTGV);
@@ -383,8 +385,11 @@ graph1 = get(handles.choix1,'SelectedObject');
             stateT(j) = stateV{j}.T;
             stateS(j) = stateV{j}.s;
         end
-
+        
         axes(handles.graph1);
+        %         S = [sL;sV];
+        %         T = [TL,TV];
+        %         plot(S,T,'b',s110,T110,'g',s39,T39,'g',stateS,stateT,'r*');
         plot(sL,TL,'b',sV,TV,'b',s110,T110,'g',s39,T39,'g',stateS,stateT,'r*');
         xlabel('s [kJ/(kg*K)]');
         ylabel('T [°C]');
@@ -405,19 +410,236 @@ graph1 = get(handles.choix1,'SelectedObject');
         plot(sL,hL,'b',sV,hV,'b',s110,h110,'g',s39,h39,'g',stateS,stateh,'r*');
         xlabel('s [kJ/(kg*K)]');
         ylabel('h [kJ/kg]');
-        
     end
+    
+elseif get(handles.level,'Value')==1
+    
+    %%%% record data %%%%
+    
+    T1g = handles.metricdata.T1g;
+    r = handles.metricdata.r;
+    Peg = handles.metricdata.Peg;
+    kcc = handles.metricdata.kcc;
+    T3g = handles.metricdata.T3g;
+    DTa = handles.metricdata.DTa;
+    DTlp = handles.metricdata.DTlp;
+    DThp = handles.metricdata.DThp;
+    pLP = handles.metricdata.pLP;
+    pHP = handles.metricdata.pHP;
+    Tw = handles.metricdata.Tw;
+    pMP = handles.metricdata.pMP;
+    DTmp = handles.metricdata.DTmp;
+    
+    fuel = get(handles.fuel,'SelectedObject');
+    if fuel == handles.gas
+        x = 1;
+        y = 4;
+        z = 0;
+        comb = 'CH4';
+    elseif fuel == handles.diesel
+        x = 12;
+        y = 23;
+        z = 0;
+        comb = 'C12H23';
+    end
+    
+    %%%% Simulation %%%%
+    
+    [stateV,stateTG,Energy_lossesTGV,labels_EnergyTGV,Exergy_lossesTGV,labels_ExTGV,massFlow,energyEff,exergyEff] = ...
+        mainCombined3(Peg,pHP,pMP,pLP,Tw,DTa,DTlp,DTmp,DThp,x,y,z,T1g,r,kcc,T3g,comb);
+    
+    %%%% plot data %%%%
+    
+    % Gas states
+    stateTGmat = zeros(5,5);
+    for i =1:5
+        stateTGmat(i,:) = [stateTG{i}.T stateTG{i}.p stateTG{i}.h stateTG{i}.s stateTG{i}.e];
+    end
+    set(handles.TabTG,'Data',stateTGmat);
+    
+    % Steam states
+    stateVmat = cell(20,6);
+    
+    for i = 1:20
+        stateVmat{i,1} = stateV{i}.T;
+        stateVmat{i,2} = stateV{i}.p;
+        stateVmat{i,3} = stateV{i}.h;
+        stateVmat{i,4} = stateV{i}.s;
+        stateVmat{i,5} = stateV{i}.e;
+        if isfinite(stateV{i}.x)
+            stateVmat{i,6} = stateV{i}.x;
+        else
+            stateVmat{i,6} = '                     -';
+        end
+    end
+    
+    set(handles.TabV,'Data',stateVmat);
+    rnames = {'1','2','3','4','5','6','7','8','9','10',...
+        '11','12','13','14','15','16','17','18','19','20'};
+    set(handles.TabV,'RowName',rnames);
+    
+    % Mass flows
+    ma = massFlow(1);
+    mg = massFlow(3);
+    mc = massFlow(2);
+    mvLP = massFlow(6);
+    mvMP = massFlow(5);
+    mvHP = massFlow(4);
+    
+    set(handles.mav,'String',ma);
+    set(handles.mcv,'String',mc);
+    set(handles.mgv,'String',mg);
+    set(handles.mHPv,'String',mvHP);
+    set(handles.mLPv,'String',mvLP);
+    set(handles.mvMPv,'String',mvMP);
+    set(handles.mTotv,'String',mvLP+mvMP+mvHP);
+    
+    % Energy analysis
+    etaMecV = energyEff(1);
+    etaCyclenV = energyEff(2);
+    etaTotenV = energyEff(3);
+    etaTotenTGV = energyEff(4);
+    etaMecTG = energyEff(5);
+    etaCyclenTG = energyEff(6);
+    etaTotenTG = energyEff(7);
+    
+    set(handles.etaMecenVv,'String',etaMecV);
+    set(handles.etaCyclenVv,'String',etaCyclenV);
+    set(handles.etaTotenVv,'String',etaTotenV);
+    set(handles.etaTotenTGVv,'String',etaTotenTGV);
+    set(handles.etaMecenTGv,'String',etaMecTG);
+    set(handles.etaCyclenTGv,'String',etaCyclenTG);
+    set(handles.etaTotenTGv,'String',etaTotenTG);
+    
+    % Exergy analysis
+    
+    etaMecTG = exergyEff(1);
+    etaRotexTG = exergyEff(2);
+    etaCyclexTG = exergyEff(3);
+    etaCombexTG = exergyEff(4);
+    etaTotexTG = exergyEff(5);
+    etaRotexV = exergyEff(6);
+    etaCyclexV = exergyEff(7);
+    etaTransexV = exergyEff(8);
+    etaTotexV = exergyEff(9);
+    etaTotexTGV = exergyEff(10);
+    
+    set(handles.etaMecexTGv,'String',etaMecTG);
+    set(handles.etaRotexTGv,'String',etaRotexTG);
+    set(handles.etaCyclexTGv,'String',etaCyclexTG);
+    set(handles.etaCombexTGv,'String',etaCombexTG);
+    set(handles.etaTotexTGv,'String',etaTotexTG);
+    set(handles.etaTotenTGv,'String',etaTotenTG);
+    set(handles.etaMecexVv,'String',etaMecV);
+    set(handles.etaRotexVv,'String',etaRotexV);
+    set(handles.etaCyclexVv,'String',etaCyclexV);
+    set(handles.etaTransexVv,'String',etaTransexV);
+    set(handles.etaTotexVv,'String',etaTotexV);
+    set(handles.etaTotexTGVv,'String',etaTotexTGV);
+    
+    % Graph 1
+    
+    graph1 = get(handles.choix1,'SelectedObject');
+    if graph1 == handles.energy1
+        axes(handles.graph1);
+        En = pie(Energy_lossesTGV);
+        hText = findobj(En,'Type','text');
+        oldExtents_cell = get(hText,'Extent'); % cell array
+        oldExtents = cell2mat(oldExtents_cell); % numeric array
+        
+        set(hText,{'String'},labels_EnergyTGV');
+        
+        newExtents_cell = get(hText,'Extent'); % cell array
+        newExtents = cell2mat(newExtents_cell); % numeric array
+        width_change = newExtents(:,3)-oldExtents(:,3);
+        signValues = sign(oldExtents(:,1));
+        offset = signValues.*(width_change/2);
+        textPositions_cell = get(hText,{'Position'}); % cell array
+        textPositions = cell2mat(textPositions_cell); % numeric array
+        textPositions(:,1) = textPositions(:,1) + offset; % add offset
+        set(hText,{'Position'},num2cell(textPositions,[3,2])); % set new position
+        
+        titre = strcat({'Primary flux'},{' '},{num2str(0.1*round(10*sum(Energy_lossesTGV)))},...
+            {' '},{'MW'});
+        t = title(titre,'FontSize',12,'FontWeight','bold');
+        pos = get(t,'position');
+        set(t, 'position', pos+[0 0.01 0]);
+        
+    elseif graph1 == handles.exergy1
+        axes(handles.graph1);
+        Ex = pie(Exergy_lossesTGV);
+        hText = findobj(Ex,'Type','text');
+        oldExtents_cell = get(hText,'Extent'); % cell array
+        oldExtents = cell2mat(oldExtents_cell); % numeric array
+        
+        set(hText,{'String'},labels_ExTGV');
+        
+        newExtents_cell = get(hText,'Extent'); % cell array
+        newExtents = cell2mat(newExtents_cell); % numeric array
+        width_change = newExtents(:,3)-oldExtents(:,3);
+        signValues = sign(oldExtents(:,1));
+        offset = signValues.*(width_change/2);
+        textPositions_cell = get(hText,{'Position'}); % cell array
+        textPositions = cell2mat(textPositions_cell); % numeric array
+        textPositions(:,1) = textPositions(:,1) + offset; % add offset
+        set(hText,{'Position'},num2cell(textPositions,[3,2])) % set new position
+        
+        titre = strcat({'Primary flux'},{' '},{num2str(0.1*round(10*sum(Exergy_lossesTGV)))},...
+            {' '},{'MW'});
+        t = title(titre,'FontSize',12,'FontWeight','bold');
+        pos = get(t,'position');
+        set(t, 'position', pos+[0 0.1 0]);
+        
+    elseif graph1 == handles.TS1
+        
+        [sL,sV,TL,TV,s115,T115,s318,T318,s818,T818,s191,T191] = combined3TS(stateV);
+        
+        n = length(stateV);
+        stateT = zeros(n,1);
+        stateS = zeros(n,1);
+        for j = 1:n
+            stateT(j) = stateV{j}.T;
+            stateS(j) = stateV{j}.s;
+        end
+        
+        axes(handles.graph1);
+   
+        plot(sL,TL,'b',sV,TV,'b',s115,T115,'g',s318,T318,'g',s818,T818,'g',...
+            s191,T191,'g',stateS,stateT,'r*');
+        xlabel('s [kJ/(kg*K)]');
+        ylabel('T [°C]');
+        
+    elseif graph1 == handles.hs1
+        
+        [sL,sV,hL,hV,s115,H115,s318,H318,s818,H818,s1920,H1920,s201,H201] = combined3hs(stateV);
+        
+        n = length(stateV);
+        stateh = zeros(n,1);
+        stateS = zeros(n,1);
+        for j = 1:n
+            stateh(j) = stateV{j}.h;
+            stateS(j) = stateV{j}.s;
+        end
+        
+        axes(handles.graph1);
+        plot(sL,hL,'b',sV,hV,'b',s115,H115,'g',s318,H318,'g',...
+            s818,H818,'g',s1920,H1920,'g',s201,H201,'g',stateS,stateh,'r*');
+        xlabel('s [kJ/(kg*K)]');
+        ylabel('h [kJ/kg]');
+    end
+    
+end
 
-function pHPv_Callback(hObject, eventdata, handles)
-% hObject    handle to pHPv (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of pHPv as text
-%        str2double(get(hObject,'String')) returns contents of pHPv as a double
-pHP = str2double(get(hObject, 'String'));
-handles.metricdata.pHP = pHP;
-guidata(hObject,handles)
+ function pHPv_Callback(hObject, eventdata, handles)
+ % hObject    handle to pHPv (see GCBO)
+ % eventdata  reserved - to be defined in a future version of MATLAB
+ % handles    structure with handles and user data (see GUIDATA)
+        
+ % Hints: get(hObject,'String') returns contents of pHPv as text
+ %        str2double(get(hObject,'String')) returns contents of pHPv as a double
+ pHP = str2double(get(hObject, 'String'));
+ handles.metricdata.pHP = pHP;
+ guidata(hObject,handles)
 
 % --- Executes during object creation, after setting all properties.
 function pHPv_CreateFcn(hObject, eventdata, handles)
@@ -620,7 +842,170 @@ set(handles.etaTotexTGVv,'String',0);
 set(handles.TabTG,'Data',zeros(5,5));
 set(handles.TabV,'Data',zeros(10,6));
 
+% 3 pressure levels parameters
+set(handles.DTmp,'String',' ');
+set(handles.DTmpv,'Visible','off');
+set(handles.DTmpu,'String',' ');
+
+set(handles.pMP,'String',' ');
+set(handles.pMPv,'Visible','off');
+set(handles.pMPu,'String',' ');
+
+set(handles.mvMP,'String',' ');
+set(handles.mvMPv,'String',' ');
+set(handles.mvMPu,'String',' ');
+
+% other
 set(gca,'Visible','off');
 cla(handles.graph1);
 
 guidata(handles.figure1, handles);
+
+function initialize3_gui(fig_handle, handles)
+ 
+% default parameters
+handles.metricdata.T1g = 15;
+handles.metricdata.r = 18;
+handles.metricdata.Peg = 230;
+handles.metricdata.kcc = 0.95;
+handles.metricdata.T3g = 1400;
+handles.metricdata.pLP = 5.8;
+handles.metricdata.pHP = 78;
+handles.metricdata.Tw = 15;
+handles.metricdata.DTa = 50;
+handles.metricdata.DTlp = 10;
+handles.metricdata.DThp = 10;
+handles.metricdata.DTmp = 10;
+handles.metricdata.pMP = 28;
+
+set(handles.T1gv,'String',handles.metricdata.T1g);
+set(handles.rv,'String',handles.metricdata.r );
+set(handles.Pegv,'String',handles.metricdata.Peg);
+set(handles.kccv,'String',handles.metricdata.kcc);
+set(handles.T3gv,'String',handles.metricdata.T3g);
+set(handles.pLPv,'String',handles.metricdata.pLP);
+set(handles.pHPv,'String',handles.metricdata.pHP);
+set(handles.Twv,'String',handles.metricdata.Tw);
+set(handles.DTav,'String',handles.metricdata.DTa);
+set(handles.DTlpv,'String',handles.metricdata.DTlp);
+set(handles.DThpv,'String',handles.metricdata.DThp);
+set(handles.DTmpv,'String',handles.metricdata.DTmp);
+set(handles.pMPv,'String',handles.metricdata.pMP);
+
+% mass flow
+set(handles.mav,'String',0);
+set(handles.mgv,'String',0);
+set(handles.mcv,'String',0);
+set(handles.mHPv,'String',0);
+set(handles.mLPv,'String',0);
+set(handles.mTotv,'String',0);
+
+% efficiencies
+set(handles.etaMecenTGv,'String',0);
+set(handles.etaCyclenTGv,'String',0);
+set(handles.etaTotenTGv,'String',0);
+    
+set(handles.etaMecexTGv,'String',0);
+set(handles.etaRotexTGv,'String',0);
+set(handles.etaCyclexTGv,'String',0);
+set(handles.etaCombexTGv,'String',0);
+set(handles.etaTotexTGv,'String',0);
+
+set(handles.etaMecenVv,'String',0);
+set(handles.etaCyclenVv,'String',0);
+set(handles.etaTotenVv,'String',0);
+
+set(handles.etaTotenTGVv,'String',0);
+
+set(handles.etaMecexVv,'String',0);
+set(handles.etaRotexVv,'String',0);
+set(handles.etaCyclexVv,'String',0);
+set(handles.etaTransexVv,'String',0);
+set(handles.etaTotexVv,'String',0);
+
+set(handles.etaTotexTGVv,'String',0);
+
+% state table
+set(handles.TabTG,'Data',zeros(5,5));
+set(handles.TabV,'Data',zeros(10,6));
+
+% 3 pressure levels parameters
+set(handles.DTmp,'String','Medium pressure pinch');
+set(handles.DTmpv,'Visible','on');
+set(handles.DTmpu,'String','[°C]');
+
+set(handles.pMP,'String','Pressure of MP turbine');
+set(handles.pMPv,'Visible','on');
+set(handles.pMPu,'String','[bar]');
+
+set(handles.mvMP,'String','MP mass flow');
+set(handles.mvMPv,'String','0');
+set(handles.mvMPu,'String','[kg/s]');
+
+set(gca,'Visible','off');
+cla(handles.graph1);
+
+guidata(handles.figure1, handles);
+
+
+% --- Executes on button press in level.
+function level_Callback(hObject, eventdata, handles)
+% hObject    handle to level (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of level
+if get(hObject,'Value')==1
+    initialize3_gui(hObject, handles);
+else
+    initialize_gui(hObject, handles);
+end
+
+
+function pMPv_Callback(hObject, eventdata, handles)
+% hObject    handle to pMPv (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of pMPv as text
+%        str2double(get(hObject,'String')) returns contents of pMPv as a double
+pMP = str2double(get(hObject, 'String'));
+handles.metricdata.pMP = pMP;
+guidata(hObject,handles)
+
+% --- Executes during object creation, after setting all properties.
+function pMPv_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pMPv (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function DTmpv_Callback(hObject, eventdata, handles)
+% hObject    handle to DTmpv (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of DTmpv as text
+%        str2double(get(hObject,'String')) returns contents of DTmpv as a double
+DTmp = str2double(get(hObject, 'String'));
+handles.metricdata.DTmp = DTmp;
+guidata(hObject,handles)
+
+% --- Executes during object creation, after setting all properties.
+function DTmpv_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to DTmpv (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
