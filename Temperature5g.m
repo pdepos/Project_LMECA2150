@@ -8,30 +8,8 @@ h0g = mCO2_g*janaf('h','CO2',273.15) + mH2O_g*janaf('h','H2O',273.15)...
 f = @(T)(mCO2_g*janaf('h','CO2',T) + mH2O_g*janaf('h','H2O',T)...
     + mO2_g*janaf('h','O2',T) + mN2_g*janaf('h','N2',T) - h0g - h5g);
 
-%%%% initial points %%%%
-a = 350;
-if f(a)>=0
-    while f(a) >=0
-       a = a-10; 
-    end
-end
+opts = optimoptions(@fsolve,'Display','none');
 
-b = 650;
-if f(b)<=0
-   while f(b)<=0
-       b = b+10;
-   end
-end
+T5g = fsolve(f,h5g+273.15,opts) - 273.15;
 
-%%%% iterative solver %%%%
-while (b-a)>0.0001
-    c = (a+b)/2;
-    if sign(f(c)) ~= sign(f(a))
-        b = c;
-    else
-        a = c;
-    end
-end
-
-T5g = ((a+b)/2) - 273.15; 
 end

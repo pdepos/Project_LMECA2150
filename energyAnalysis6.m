@@ -22,8 +22,9 @@ function [Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten] = energyAnalysi
 %   - etaCyclen : the cycle's energy efficiency
 %   - etaToten : the total energy efficiency of the cycle
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Fuel characteristics %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if strcmp(fuel,'CH4')
     LHV = 50.1*10^3; %[kJ/kg]
@@ -31,7 +32,10 @@ elseif strcmp(fuel,'C12H23')
     LHV = 41.76*10^3; %[kJ/kg]
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Energy analysis %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
 WmT = state{4}.h - state{5}.h; % turbine work [kJ/kg]
 WmC = state{2}.h - state{1}.h; % compressor work [kJ/kg]
 
@@ -48,19 +52,19 @@ Wm = Pm/ma; % motor work [kJ/kg_air]
 Pfmec = Pm-Pe; % mechanical losses power [kW]
 Pech = Pprim - Pe - Pfmec; % exhaust power [kW]
 
-% efficiencies
+%%%% Efficiencies %%%%
 
-etaMec = Pe/Pm;
-etaCyclen = Wm/Qcomb;
-etaToten = Pe/(mc*LHV);
+etaMec = Pe/Pm; % mechanical efficiency
+etaCyclen = Wm/Qcomb; % cycle efficiency 
+etaToten = Pe/(mc*LHV); % total efficiency
 
-% pie chart (in [MW])
-Energy_losses = [Pe/10^3 Pech/10^3 Pfmec/10^3];
+%%%% Pie chart (in [MW]) %%%%
+
+Energy_losses = [Pe/10^3 Pech/10^3 Pfmec/10^3]; % losses vector
+
 lab_EP = vertcat({'Effective power'},strcat({num2str(0.1*round(10*Pe/10^3))},{' '},{'MW'}));
 lab_ExL = vertcat({'Exhaust losses'},strcat({num2str(0.1*round(10*Pech/10^3))},{' '},{'MW'}));
 lab_Mec = vertcat({'Mechanical losses'},strcat({num2str(0.1*round(10*Pfmec/10^3))},{' '},{'MW'}));
-labels_Energy = {lab_EP,lab_ExL,lab_Mec};
-
-
+labels_Energy = {lab_EP,lab_ExL,lab_Mec}; %labels vector
 
 end

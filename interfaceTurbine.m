@@ -213,80 +213,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
-function xv_Callback(hObject, eventdata, handles)
-% hObject    handle to xv (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of xv as text
-%        str2double(get(hObject,'String')) returns contents of xv as a double
-x = str2double(get(hObject, 'String'));
-handles.metricdata.x = x;
-guidata(hObject,handles)
-
-% --- Executes during object creation, after setting all properties.
-function xv_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to xv (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function yv_Callback(hObject, eventdata, handles)
-% hObject    handle to yv (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of yv as text
-%        str2double(get(hObject,'String')) returns contents of yv as a double
-y = str2double(get(hObject, 'String'));
-handles.metricdata.y = y;
-guidata(hObject,handles)
-
-% --- Executes during object creation, after setting all properties.
-function yv_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to yv (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function zv_Callback(hObject, eventdata, handles)
-% hObject    handle to zv (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of zv as text
-%        str2double(get(hObject,'String')) returns contents of zv as a double
-z = str2double(get(hObject, 'String'));
-handles.metricdata.z = z;
-guidata(hObject,handles)
-
-% --- Executes during object creation, after setting all properties.
-function zv_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to zv (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function NTUv_Callback(hObject, eventdata, handles)
 % hObject    handle to NTUv (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -326,9 +252,7 @@ if get(handles.recuperator,'Value')==0
     Pe = handles.metricdata.Pe; % [MW]
     kcc = handles.metricdata.kcc;
     T3 = handles.metricdata.T3; % [°C]
-%     x = handles.metricdata.x;
-%     y = handles.metricdata.y;
-%     z = handles.metricdata.z;
+    
     fuel = get(handles.fuel,'SelectedObject');
     if fuel == handles.gas
         x = 1;
@@ -427,6 +351,7 @@ if get(handles.recuperator,'Value')==0
         set(t, 'position', pos+[0 0.15 0]);
     elseif graph1 == handles.BTS1
         
+        
     elseif graph1 == handles.BHS1
         
     end
@@ -439,9 +364,6 @@ elseif get(handles.recuperator,'Value')==1
     Pe = handles.metricdata.Pe; % [MW]
     kcc = handles.metricdata.kcc;
     T3 = handles.metricdata.T3; % [°C]
-%     x = handles.metricdata.x;
-%     y = handles.metricdata.y;
-%     z = handles.metricdata.z;
     NTU = handles.metricdata.NTU;
     fuel = get(handles.fuel,'SelectedObject');
     if fuel == handles.gas
@@ -556,24 +478,24 @@ img = imread('TurbineGas.PNG');
 image(img);
 set(gca,'Visible','off');
 
+% graph 1
+axes(handles.graph1);
+img2 = imread('epl.JPG');
+image(img2);
+set(gca,'Visible','off');
+
 % default parameters
 handles.metricdata.T1 = 15;
 handles.metricdata.r = 18;
 handles.metricdata.Pe = 230;
 handles.metricdata.kcc = 0.95;
 handles.metricdata.T3 = 1400;
-% handles.metricdata.x = 1;
-% handles.metricdata.y = 4;
-% handles.metricdata.z = 0;
 
 set(handles.T1v,'String',handles.metricdata.T1);
 set(handles.rv,'String',18);
 set(handles.Pev,'String',230);
 set(handles.kccv,'String',0.95);
 set(handles.T3v,'String',1400);
-% set(handles.xv,'String',1);
-% set(handles.yv,'String',4);
-% set(handles.zv,'String',0);
 
 % NTU
 set(handles.NTU,'String',' ');
@@ -599,7 +521,7 @@ set(handles.totexv,'String',0);
 set(handles.states,'Data',zeros(4,5));
 set(gca,'Visible','off');
 
-cla(handles.graph1);
+% cla(handles.graph1);
 guidata(handles.figure1, handles);
 
 function initialize_Recup(fig_handle, handles)
@@ -610,24 +532,25 @@ img = imread('TurbineGasRecup.PNG');
 image(img);
 set(gca,'Visible','off');
 
+% graph 1
+axes(handles.graph1);
+img2 = imread('epl.jpg');
+image(img2);
+set(gca,'Visible','off');
+
 % default parameters
 handles.metricdata.T1 = 15;
 handles.metricdata.r = 18;
 handles.metricdata.Pe = 230;
 handles.metricdata.kcc = 0.95;
 handles.metricdata.T3 = 1400;
-% handles.metricdata.x = 1;
-% handles.metricdata.y = 4;
-% handles.metricdata.z = 0;
 
 set(handles.T1v,'String',15);
 set(handles.rv,'String',18);
 set(handles.Pev,'String',230);
 set(handles.kccv,'String',0.95);
 set(handles.T3v,'String',1400);
-% set(handles.xv,'String',1);
-% set(handles.yv,'String',4);
-% set(handles.zv,'String',0);
+
 
 % NTU
 set(handles.NTU,'String','Number of transfer units (NTU)');
@@ -653,5 +576,5 @@ set(handles.totexv,'String',0);
 
 % state table
 set(handles.states,'Data',zeros(6,5));
-cla(handles.graph1);
+
 guidata(handles.figure1, handles);

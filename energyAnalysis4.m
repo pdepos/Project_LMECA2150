@@ -22,14 +22,19 @@ function [Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten] = energyAnalysi
 %   - etaCyclen : the cycle's energy efficiency
 %   - etaToten : the total energy efficiency of the cycle
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Fuel characteristics %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if strcmp(fuel,'CH4')
     LHV = 50.1*10^3; %[kJ/kg]
 elseif strcmp(fuel,'C12H23')
     LHV = 41.76*10^3; %[kJ/kg]
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Energy analysis %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
 
 WmT = state{3}.h - state{4}.h; % turbine work [kJ/kg]
 WmC = state{2}.h - state{1}.h; % compressor work [kJ/kg]
@@ -47,13 +52,13 @@ Wm = Pm/ma; % motor work [kJ/kg_air]
 Pfmec = Pm-Pe; % mechanical losses power [kW]
 Pech = Pprim - Pe - Pfmec; % exhaust power [kW]
 
-% efficiencies
+%%%% efficiencies %%%%
 
 etaMec = Pe/Pm; % mechanical efficiency
 etaCyclen = Wm/Qcomb; % cycle efficiency
 etaToten = Pe/(mc*LHV); % total efficiency
 
-% pie chart (in [MW])
+%%%% pie chart (in [MW]) %%%%
 
 Energy_losses = [Pe/10^3 Pech/10^3 Pfmec/10^3]; % Losses values
 
