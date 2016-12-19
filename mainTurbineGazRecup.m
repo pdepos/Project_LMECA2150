@@ -1,4 +1,4 @@
-function [state,Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten,Exergy_losses,labels_Ex,etaRotex,etaCyclex,etaCombex,etaTotex,ma,mc,mg,lambda] = mainTurbineGazRecup(T1,r,etaPiC,kcc,T4,etaPiT,Pe,x,y,z,NTU)
+function [state,Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten,Exergy_losses,labels_Ex,etaRotex,etaCyclex,etaCombex,etaTotex,ma,mc,mg,lambda] = mainTurbineGazRecup(T1,r,etaPiC,kcc,T4,etaPiT,Pe,x,y,z,NTU,fuel)
 
 T1 = T1 +273.15; % conversion °C --> K
 T4 = T4 +273.15; % conversion °C --> K
@@ -82,7 +82,7 @@ state{4}.h = mCO2_g*janaf('h','CO2',T4) + mH2O_g*janaf('h','H2O',T4)...
 state{5}.h = mCO2_g*janaf('h','CO2',T5) + mH2O_g*janaf('h','H2O',T5)...
     + mO2_g*janaf('h','O2',T5) + mN2_g*janaf('h','N2',T5) - h0g;
 
-[ma,mc,mg,lambda,T3,state] = solverFlowRecup(state,x,y,z,kmec,Pe,NTU,T5);
+[ma,mc,mg,lambda,T3,state] = solverFlowRecup(state,x,y,z,kmec,Pe,NTU,T5,fuel);
 
 lambda_prev = lambda0;
 T5_prev = T5_0;
@@ -106,7 +106,7 @@ while abs(lambda_prev - lambda)>0.01 || abs(T5 - T5_prev)>0.01
     state{5}.h = mCO2_g*janaf('h','CO2',T5) + mH2O_g*janaf('h','H2O',T5)...
         + mO2_g*janaf('h','O2',T5) + mN2_g*janaf('h','N2',T5) - h0g;
     
-    [ma,mc,mg,lambda,T3,state] = solverFlowRecup(state,x,y,z,kmec,Pe,NTU,T5);
+    [ma,mc,mg,lambda,T3,state] = solverFlowRecup(state,x,y,z,kmec,Pe,NTU,T5,fuel);
 
 end
 
@@ -180,9 +180,9 @@ state{6}.s = mCO2_g*janaf('s','CO2',T6) + mH2O_g*janaf('s','H2O',T6)...
 %%%%%%%%%%%%%%%%%%
 
 %%%% Energy analysis %%%%
-[Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten] = energyAnalysis6(state,ma,mc,mg,Pe,x,y,z);
+[Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten] = energyAnalysis6(state,ma,mc,mg,Pe,x,y,z,fuel);
 
 %%%% Exergy analysis %%%%
-[Exergy_losses,labels_Ex,etaMec,etaRotex,etaCyclex,etaCombex,etaTotex] = exergyAnalysis6(state,ma,mc,mg,x,y,z,Pe);
+[Exergy_losses,labels_Ex,etaMec,etaRotex,etaCyclex,etaCombex,etaTotex] = exergyAnalysis6(state,ma,mc,mg,x,y,z,Pe,fuel);
 
 end

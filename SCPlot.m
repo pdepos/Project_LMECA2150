@@ -3,8 +3,6 @@ function [] = SCPlot( state, RH, FH )
 
 ind1    = 1;
 ind2    = 2;
-ind2i   = 3;
-ind2ii  = 4;
 step2 = 500;
 eta_SiTHP = 0.90;
 eta_SiTLP = 0.88;
@@ -73,29 +71,14 @@ s12 = linspace(state{ind1}.s,state{ind2}.s,step2);
 p12 = linspace(state{ind1}.p,state{ind2}.p,step2);
 h12 = arrayfun(@(p,s) XSteam('h_ps',p,s), p12, s12);
 t12 = arrayfun(@(p,s) XSteam('T_ps',p,s), p12, s12);
-% Curve 2 to 2i
-s22i = linspace(state{ind2}.s,state{ind2i}.s,step2);
-p22i = linspace(state{ind2}.p,state{ind2i}.p,step2);
-h22i = arrayfun(@(p,s) XSteam('h_ps',p,s), p22i, s22i);
-t22i = arrayfun(@(p,s) XSteam('T_ps',p,s), p22i, s22i);
-% Curve 2i to 2ii
-s2i2ii = linspace(state{ind2i}.s,state{ind2ii}.s,step2);
-p2i2ii = linspace(state{ind2i}.p,state{ind2ii}.p,step2);
-h2i2ii = arrayfun(@(p,s) XSteam('h_ps',p,s), p2i2ii, s2i2ii);
-t2i2ii = arrayfun(@(p,s) XSteam('T_ps',p,s), p2i2ii, s2i2ii);
-
-
-s12ii = [s12, s22i, s2i2ii];
-t12ii = [t12, t22i, t2i2ii];
-h12ii = [h12, h22i, h2i2ii];
 
 %% RH OFF, FH = 0
 if alpha == 6
     % Curve 2'' to 3
-    s2ii3 = linspace(state{ind2ii}.s,state{ind3}.s,step2);
-    p2ii3 = linspace(state{ind2ii}.p,state{ind3}.p,step2);
-    h2ii3 = arrayfun(@(p,s) XSteam('h_ps',p,s), p2ii3, s2ii3);
-    t2ii3 = arrayfun(@(p,s) XSteam('T_ps',p,s), p2ii3, s2ii3);
+    s23 = linspace(state{ind2}.s,state{ind3}.s,step2);
+    p23 = linspace(state{ind2}.p,state{ind3}.p,step2);
+    h23 = arrayfun(@(p,s) XSteam('h_ps',p,s), p23, s23);
+    t23 = arrayfun(@(p,s) XSteam('T_ps',p,s), p23, s23);
     % Curve 3 to 4
     p34   = linspace(state{ind3}.p,state{ind4}.p,step2);
     s34_s = linspace(state{ind3}.s,state{ind3}.s,step2);
@@ -124,18 +107,18 @@ if alpha == 6
     t41 = [t44L, t4L1];
     h41 = [h44L, h4L1];
     
-Sif = [s2ii3, s34, s41];
-Tif = [t2ii3, t34, t41];
-Hif = [h2ii3, h34, h41];
+Sif = [s23, s34, s41];
+Tif = [t23, t34, t41];
+Hif = [h23, h34, h41];
 
 %% RH ON, FH = 0
 elseif alpha == 8 
     % Main Points
     % Curve 2'' to 3HP
-    s2ii3 = linspace(state{ind2ii}.s,state{ind3HP}.s,step2);
-    p2ii3 = linspace(state{ind2ii}.p,state{ind3HP}.p,step2);
-    h2ii3 = arrayfun(@(p,s) XSteam('h_ps',p,s), p2ii3, s2ii3);
-    t2ii3 = arrayfun(@(p,s) XSteam('T_ps',p,s), p2ii3, s2ii3);
+    s23 = linspace(state{ind2}.s,state{ind3HP}.s,step2);
+    p23 = linspace(state{ind2}.p,state{ind3HP}.p,step2);
+    h23 = arrayfun(@(p,s) XSteam('h_ps',p,s), p23, s23);
+    t23 = arrayfun(@(p,s) XSteam('T_ps',p,s), p23, s23);
     
     % Curve 3HP to 4HP
     p34HP   = linspace(state{ind3HP}.p,state{ind4HP}.p,step2);
@@ -185,18 +168,18 @@ elseif alpha == 8
     h4LP1 = [h4LP4L, h4L1];
     
     
-    Sif = [s2ii3, s34, s4LP1];
-    Tif = [t2ii3, t34, t4LP1];
-    Hif = [h2ii3, h34, h4LP1];
+    Sif = [s23, s34, s4LP1];
+    Tif = [t23, t34, t4LP1];
+    Hif = [h23, h34, h4LP1];
     
 %% RH OFF, FH # 0
 elseif alpha == 10
     % Main Points
     % Curve 2'' to 3
-    s2ii3 = linspace(state{ind2ii}.s,state{ind3}.s,step2);
-    p2ii3 = linspace(state{ind2ii}.p,state{ind3}.p,step2);
-    h2ii3 = arrayfun(@(p,s) XSteam('h_ps',p,s), p2ii3, s2ii3);
-    t2ii3 = arrayfun(@(p,s) XSteam('T_ps',p,s), p2ii3, s2ii3);
+    s23 = linspace(state{ind2}.s,state{ind3}.s,step2);
+    p23 = linspace(state{ind2}.p,state{ind3}.p,step2);
+    h23 = arrayfun(@(p,s) XSteam('h_ps',p,s), p23, s23);
+    t23 = arrayfun(@(p,s) XSteam('T_ps',p,s), p23, s23);
     % Curve 3 to 4
     p34   = linspace(state{ind3}.p,state{ind4}.p,step2);
     s34_s = linspace(state{ind3}.s,state{ind3}.s,step2);
@@ -267,9 +250,9 @@ elseif alpha == 10
         h61 = arrayfun(@(p,s) XSteam('h_ps',p,s), p61, s61);
     end
 
-    Sif = [s2ii3, s34, s45, s56, s61];
-    Tif = [t2ii3, t34, t45, t56, t61];
-    Hif = [h2ii3, h34, h45, h56, h61];
+    Sif = [s23, s34, s45, s56, s61];
+    Tif = [t23, t34, t45, t56, t61];
+    Hif = [h23, h34, h45, h56, h61];
     
     % Additional Points
     % Curves 4i to 7i 
@@ -309,10 +292,10 @@ elseif alpha == 10
 elseif alpha == 12
     % Main Points
     % Curve 2'' to 3HP
-    s2ii3 = linspace(state{ind2ii}.s,state{ind3HP}.s,step2);
-    p2ii3 = linspace(state{ind2ii}.p,state{ind3HP}.p,step2);
-    h2ii3 = arrayfun(@(p,s) XSteam('h_ps',p,s), p2ii3, s2ii3);
-    t2ii3 = arrayfun(@(p,s) XSteam('T_ps',p,s), p2ii3, s2ii3);
+    s23 = linspace(state{ind2}.s,state{ind3HP}.s,step2);
+    p23 = linspace(state{ind2}.p,state{ind3HP}.p,step2);
+    h23 = arrayfun(@(p,s) XSteam('h_ps',p,s), p23, s23);
+    t23 = arrayfun(@(p,s) XSteam('T_ps',p,s), p23, s23);
     
     % Curve 3HP to 4HP
     p34HP   = linspace(state{ind3HP}.p,state{ind4HP}.p,step2);
@@ -397,9 +380,9 @@ elseif alpha == 12
         h61 = arrayfun(@(p,s) XSteam('h_ps',p,s), p61, s61);
     end
     
-    Sif = [s2ii3, s34, s45, s56, s61];
-    Tif = [t2ii3, t34, t45, t56, t61];
-    Hif = [h2ii3, h34, h45, h56, h61];
+    Sif = [s23, s34, s45, s56, s61];
+    Tif = [t23, t34, t45, t56, t61];
+    Hif = [h23, h34, h45, h56, h61];
     
     % Additional Points
     % Curve 4HP to 7HP
@@ -476,13 +459,11 @@ end
 
 
 
-Smain = [s12ii, Sif];
-Tmain = [t12ii, Tif];
-Hmain = [h12ii, Hif];
+Smain = [s12, Sif];
+Tmain = [t12, Tif];
+Hmain = [h12, Hif];
 
 
-figure
-subplot(2,1,1);
 plot(S_Cycle,T_Cycle,'*r',S,Tsat,'-b',Smain,Tmain,'-r'); hold on;
 if FH > 0
     size_s47i = size(s47i);
@@ -497,7 +478,7 @@ xlabel('s [kJ/kgK]'); hold on;
 ylabel('t [°C]'); hold on;
 grid on; 
 
-subplot(2,1,2);
+
 plot(S_Cycle,H_Cycle,'*r',S,Hsat,'-b',Smain,Hmain,'-r'); hold on;
 if FH > 0
     size_s47i = size(s47i);

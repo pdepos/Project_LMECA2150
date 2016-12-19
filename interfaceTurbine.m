@@ -22,7 +22,7 @@ function varargout = interfaceTurbine(varargin)
 
 % Edit the above text to modify the response to help interfaceTurbine
 
-% Last Modified by GUIDE v2.5 26-Nov-2016 14:08:21
+% Last Modified by GUIDE v2.5 04-Dec-2016 15:29:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -326,16 +326,28 @@ if get(handles.recuperator,'Value')==0
     Pe = handles.metricdata.Pe; % [MW]
     kcc = handles.metricdata.kcc;
     T3 = handles.metricdata.T3; % [°C]
-    x = handles.metricdata.x;
-    y = handles.metricdata.y;
-    z = handles.metricdata.z;
+%     x = handles.metricdata.x;
+%     y = handles.metricdata.y;
+%     z = handles.metricdata.z;
+    fuel = get(handles.fuel,'SelectedObject');
+    if fuel == handles.gas
+        x = 1;
+        y = 4;
+        z = 0;
+        comb = 'CH4';
+    elseif fuel == handles.diesel
+        x = 12;
+        y = 23;
+        z = 0;
+        comb = 'C12H23';
+    end
     
     %%%% Fixed data %%%%
     etaPiC = 0.9;
     etaPiT = 0.9;
     
     %%%% Simulation %%%%
-    [state,Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten,Exergy_losses,labels_Ex,etaRotex,etaCyclex,etaCombex,etaTotex,ma,mc,mg,lambda] = mainTurbineGaz(T1,r,etaPiC,kcc,T3,etaPiT,Pe,x,y,z);
+    [state,Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten,Exergy_losses,labels_Ex,etaRotex,etaCyclex,etaCombex,etaTotex,ma,mc,mg,lambda] = mainTurbineGaz(T1,r,etaPiC,kcc,T3,etaPiT,Pe,x,y,z,comb);
  
     %%%% plot Results %%%%
     
@@ -427,17 +439,29 @@ elseif get(handles.recuperator,'Value')==1
     Pe = handles.metricdata.Pe; % [MW]
     kcc = handles.metricdata.kcc;
     T3 = handles.metricdata.T3; % [°C]
-    x = handles.metricdata.x;
-    y = handles.metricdata.y;
-    z = handles.metricdata.z;
+%     x = handles.metricdata.x;
+%     y = handles.metricdata.y;
+%     z = handles.metricdata.z;
     NTU = handles.metricdata.NTU;
+    fuel = get(handles.fuel,'SelectedObject');
+    if fuel == handles.gas
+        x = 1;
+        y = 4;
+        z = 0;
+        comb = 'CH4';
+    elseif fuel == handles.diesel
+        x = 12;
+        y = 23;
+        z = 0;
+        comb = 'C12H23';
+    end
     
     %%%% Fixed data %%%%
     etaPiC = 0.9;
     etaPiT = 0.9;
     
     %%%% Simulation %%%%
-    [state,Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten,Exergy_losses,labels_Ex,etaRotex,etaCyclex,etaCombex,etaTotex,ma,mc,mg,lambda] = mainTurbineGazRecup(T1,r,etaPiC,kcc,T3,etaPiT,Pe,x,y,z,NTU);
+    [state,Energy_losses,labels_Energy,etaMec,etaCyclen,etaToten,Exergy_losses,labels_Ex,etaRotex,etaCyclex,etaCombex,etaTotex,ma,mc,mg,lambda] = mainTurbineGazRecup(T1,r,etaPiC,kcc,T3,etaPiT,Pe,x,y,z,NTU,comb);
  
     %%%% plot Results %%%%
     
@@ -538,18 +562,18 @@ handles.metricdata.r = 18;
 handles.metricdata.Pe = 230;
 handles.metricdata.kcc = 0.95;
 handles.metricdata.T3 = 1400;
-handles.metricdata.x = 1;
-handles.metricdata.y = 4;
-handles.metricdata.z = 0;
+% handles.metricdata.x = 1;
+% handles.metricdata.y = 4;
+% handles.metricdata.z = 0;
 
 set(handles.T1v,'String',handles.metricdata.T1);
 set(handles.rv,'String',18);
 set(handles.Pev,'String',230);
 set(handles.kccv,'String',0.95);
 set(handles.T3v,'String',1400);
-set(handles.xv,'String',1);
-set(handles.yv,'String',4);
-set(handles.zv,'String',0);
+% set(handles.xv,'String',1);
+% set(handles.yv,'String',4);
+% set(handles.zv,'String',0);
 
 % NTU
 set(handles.NTU,'String',' ');
@@ -592,18 +616,18 @@ handles.metricdata.r = 18;
 handles.metricdata.Pe = 230;
 handles.metricdata.kcc = 0.95;
 handles.metricdata.T3 = 1400;
-handles.metricdata.x = 1;
-handles.metricdata.y = 4;
-handles.metricdata.z = 0;
+% handles.metricdata.x = 1;
+% handles.metricdata.y = 4;
+% handles.metricdata.z = 0;
 
 set(handles.T1v,'String',15);
 set(handles.rv,'String',18);
 set(handles.Pev,'String',230);
 set(handles.kccv,'String',0.95);
 set(handles.T3v,'String',1400);
-set(handles.xv,'String',1);
-set(handles.yv,'String',4);
-set(handles.zv,'String',0);
+% set(handles.xv,'String',1);
+% set(handles.yv,'String',4);
+% set(handles.zv,'String',0);
 
 % NTU
 set(handles.NTU,'String','Number of transfer units (NTU)');
@@ -631,4 +655,3 @@ set(handles.totexv,'String',0);
 set(handles.states,'Data',zeros(6,5));
 cla(handles.graph1);
 guidata(handles.figure1, handles);
-

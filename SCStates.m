@@ -1,4 +1,4 @@
-function [ Output ] = SteamCycle( T_max, T_min, P_max, FH, RH )
+function [ Output ] = SCStates( T_max, T_min, P_max, FH, RH )
 %Steam Cycle
 %   Input Arguments: 
 %   - Max Steam Pressure [bar]
@@ -11,7 +11,7 @@ function [ Output ] = SteamCycle( T_max, T_min, P_max, FH, RH )
 step = 10000;
 switch RH
     case 'off' 
-        if (T_max > 600) || (T_max < 200) || (P_max > 80) || (P_max < 10)
+        if (T_max > 700) || (T_max < 200) || (P_max > 100) || (P_max < 10)
             warning('The cycle you are trying to test is not reasonable. Please verify pressure or temperature inputs')
             return
         end
@@ -25,7 +25,7 @@ switch RH
         end
     case 'on'
         r = 1;
-        if (T_max > 600) || (T_max < 200) || (P_max > 400) || (P_max < 50)
+        if (T_max > 700) || (T_max < 200) || (P_max > 400) || (P_max < 50)
             warning('The cycle you are trying to test is not reasonable. Please verify pressure or temperature inputs')
             return
         end
@@ -118,7 +118,7 @@ beta  = 4;                 %Number of points per state: eg: beta = 3 means 4.1 6
                            %something more into account. eg before and
                            %after isenthalpic valves
 gamma    = 4;              %Param for bache calculation
-p_bache  = 4.6;            %Param fixing the bache pressure
+p_bache0 = 2;            %Param fixing the bache pressure
 eta_FWP  = 0.85;           %Efficiency feedwater pump
 eta_BP   = 0.85;           %Efficiency of the Bache Pump
 eta_CP   = 0.85;           %Efficiency Condenser Pump
@@ -182,16 +182,16 @@ end
 % Point 1 entry FWPump
 if rh_param == 1;                            %If used for RH Cycle, FWP entry Temp depends on exit pressure HP Turbine
     p_4HP = p_max * kpdgen;                  %Pressure exit HP Turbine if RH Cycle
-    state{ind1}.t = XSteam('Tsat_p',p_4HP);  %Considering the desuperheaters we decided to fix 
-                                             %this temp at the sat temp of the HP Turbine Bleed
-                                             %in approximation to what we saw in the book.
+    state{ind1}.t = XSteam('Tsat_p',p_4HP);  %To consider the desuperheaters in a simple way we decided to fix 
+                                             %the temperature of the FW at the entry of the FWPump to be equal to 
+                                             %the sat temp of the HP Turbine Bleed in approximation to what we saw in the book.
     state{ind1}.p = XSteam('psat_T',state{ind1}.t) + 10;        %FWPump entry pressure above saturation pressure.
     state{ind1}.h = XSteam('h_pT',state{ind1}.p,state{ind1}.t);
     state{ind1}.s = XSteam('s_pT',state{ind1}.p,state{ind1}.t);
     state{ind1}.e = Exergy(state{ind1}.h,state{ind1}.s);
 else
     state{ind1}.t = XSteam('Tsat_p',state{n-beta+1}.p) - 5;     %FWPump entry temp is sat temp of last bleed - 5°C.
-    state{ind1}.p = XSteam('psat_T',state{ind1}.t) + 2;        %FWPump entry pressure above saturation pressure.
+    state{ind1}.p = XSteam('psat_T',state{ind1}.t) + 2;         %FWPump entry pressure above saturation pressure.
     state{ind1}.h = XSteam('h_pT',state{ind1}.p,state{ind1}.t);
     state{ind1}.s = XSteam('s_pT',state{ind1}.p,state{ind1}.t);
     state{ind1}.e = Exergy(state{ind1}.h,state{ind1}.s);
@@ -205,12 +205,12 @@ state{ind2} = pump(state{ind1},state{ind2},eta_FWP);
 position_bache = 1;               %References the roman number of the schematic
 index_bleed_bache = alpha + 1;    %Index of the bleed entering the bache at higher pressure
 if fh > gamma                     %Finding the bache if the number of bleeds is higher than gamma
-    
-    while state{index_bleed_bache}.p < 4.6
+    while (state{index_bleed_bache}.p < p_bache0) && (position_bache <= fh)
         position_bache = position_bache + 1;
         index_bleed_bache = index_bleed_bache + beta;
     end
     index_exit_bache = alpha + beta*position_bache; %References the exit 8bache of the bache 
+    p_bache = state{index_bleed_bache}.p;
     
     for i = 1:fh
         ind7i = alpha + beta*i - 1;
@@ -366,7 +366,7 @@ ind4HP  = 6;
 ind3LP  = 7;
 ind4LP  = 8;
 
-p_3LP     = 0.13*hp;
+p_3LP     = 0.12*hp;
 kpdgen    = 1.10;
 eta_SiTHP = 0.90; % Isentropic Efficiency HP Turbine
 eta_SiTLP = 0.88; % Isentropic Efficiency LP Turbine
@@ -436,14 +436,7 @@ beta  = 4;                 %Number of points per state: eg: beta = 3 means 4.1 6
                            %something more into account. eg before and
                            %after isenthalpic valves
 alpha_FH_base = 10;        %Fixed points in simple FH function to get the indexes in the FH_base
-gamma     = 4;             %Param for bache calculation
-p_3LP     = 0.14*hp;      %Pressure exit HP turbine
-p_bache   = 4.6;           %Param fixing the bache pressure
-eta_SiTHP = 0.90;          %Isentropic Efficiency HP Turbine
-eta_SiTLP = 0.88;          %Isentropic Efficiency LP Turbine
-eta_FWP   = 0.85;          %Efficiency feedwater pump
-eta_BP    = 0.85;          %Efficiency of the Bache Pump
-eta_CP    = 0.85;          %Efficiency Condenser Pump
+eta_FWP   = 0.85;
 kpdgen    = 1.10;          %Pressure drop coefficient at steam generator. 
                            %Determined via numerical examples in book
 ind1    = 1;
@@ -506,7 +499,11 @@ end
 
 % Points around the HP Bleed
 % Point 4HP 
+str1 = state{n - beta + 1}.States;
+str2 = '=';
+str3 = state{ind4HP}.States;
 state{n - beta + 1} = state{ind4HP};
+state{n - beta + 1}.States = [str1 str2 str3];
 
 % Point 7HP
 state{n - beta + 3}.p = state{n - beta + 1}.p;
